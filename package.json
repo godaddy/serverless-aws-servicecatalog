@@ -1,5 +1,5 @@
 {
-  "name": "sc-serverless-plugin",
+  "name": "serverless-aws-service-catalog",
   "version": "1.0.0",
   "description": "",
   "main": "src/AwsCompileServiceCatalog.js",

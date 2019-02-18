@@ -60,7 +60,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName:
-        Fn::Sub: "/aws/lambda/${FunctionName}-${FunctionStage}"
+        Fn::Sub: "/aws/lambda/${FunctionName}"
   IamRoleLambdaExecution:
     Type: AWS::IAM::Role
     Properties:
@@ -83,12 +83,12 @@ Resources:
             Action:
             - logs:CreateLogStream
             Resource:
-            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FunctionName}-${FunctionStage}:*
+            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FunctionName}:*
           - Effect: Allow
             Action:
             - logs:PutLogEvents
             Resource:
-            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FunctionName}-${FunctionStage}:*:*
+            - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FunctionName}:*:*
       Path: "/"
       RoleName:
         Fn::Sub: "${FunctionName}-${FunctionStage}-${AWS::Region}-lambdaRole"
@@ -101,7 +101,7 @@ Resources:
         S3Key:
           Ref: BucketKey
       FunctionName:
-        Fn::Sub: "${FunctionName}-${FunctionStage}"
+        Fn::Sub: "${FunctionName}"
       Handler:
         Ref: FunctionHandler
       MemorySize:

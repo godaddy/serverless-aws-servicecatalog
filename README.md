@@ -16,8 +16,41 @@ plugins:
   modules:
     - serverless-aws-service-catalog
 ```
+## Setup
+( note: Replace S3BUCKET with your bucket name for the following steps )
 
-## Configuration
+### 1. Copy the contents of the templates directory to a s3 bucket
+
+```shell
+aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s3://S3BUCKET  --exclude "*" --include "*.yml" --recursive 
+```
+
+### 2. Create the AWS Service Catalog portfolio
+
+  - Login to the AWS console as a user with permissions to create Service Catalog products.
+
+  - In Cloud Formation, click "Create a new Stack"
+
+  - Select "Specify an Amazon S3 template URL"
+
+  - Enter the template location: https://s3.amazonaws.com/S3BUCKET/serverless/sc-portfolio-serverless.yml
+
+  - Click Next
+
+  - Enter the stack name: Serverless-SC-Portfolio-Stack
+
+  - Enter RepoRootUrl param: https://s3.amazonaws.com/S3BUCKET/ ( NOTE: the trailing slash is required )
+
+  - Click Next, Next and check the acknowledgement checkboxes
+
+  - Click Create
+
+### 3 Set Permissions
+  - In the AWS console Add the user that the aws cli is running under to the ServiceCatalogEndUsers IAM group
+
+### 4. Configure the serveless.yml in your lambda project
+
+### Configuration reference
 ```yaml
 provider:
   name: aws
@@ -32,3 +65,20 @@ provider:
     PortfolioId: PORTFOLIO-ID
     RepoRootURL: S3-BUCKET-OR-REPO-URL
 ```
+
+```shell 
+  aws servicecatalog list-portfolios 
+```
+  - copy the Id value to PortfolioId
+  - copy ProviderName to PortfolioProvider
+
+```shell
+aws servicecatalog list-constraints-for-portfolio  --portfolio-id PORTFOLIO_ID  
+```
+  - copy the Description value to LaunchConstraintARN
+
+```
+aws servicecatalog search-products
+``` 
+  - copy the ProductId value to scProductId
+

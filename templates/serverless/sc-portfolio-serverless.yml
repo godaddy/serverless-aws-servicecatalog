@@ -39,14 +39,17 @@ Parameters:
     Type: String
     Description: Name of the launch constraint role for Serverless products. leave
       this blank to create the role.
+    Default: ''
   LinkedRole1:
     Type: String
     Description: "(Optional) The name of a role which can execute products in this
       portfolio."
+    Default: ''
   LinkedRole2:
     Type: String
     Description: "(Optional) The name of a second role which can execute products
       in this portfolio."
+    Default: ''
   RepoRootURL:
     Type: String
     Description: Root url for the repo containing the product templates.

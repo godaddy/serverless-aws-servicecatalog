@@ -81,7 +81,7 @@ Conditions:
       - Ref: LinkedRole2
       - ''
 Resources:
-  SCServerlessportfolio:
+  SCServerlessPortfolio:
     Type: AWS::ServiceCatalog::Portfolio
     Properties:
       ProviderName:
@@ -97,7 +97,7 @@ Resources:
       PrincipalARN:
         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LinkedRole1}
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
   addrole2:
     Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
@@ -106,7 +106,7 @@ Resources:
       PrincipalARN:
         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LinkedRole2}
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
   LaunchConstraintRole:
     Type: AWS::CloudFormation::Stack
@@ -133,7 +133,7 @@ Resources:
           - Outputs.EndUserGroupArn
         - Fn::Sub: arn:aws:iam::${AWS::AccountId}:group/ServiceCatalogEndusers
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
   serverlessproduct:
     Type: AWS::CloudFormation::Stack
@@ -149,13 +149,17 @@ Resources:
             - Outputs.LaunchRoleArn
           - Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LaunchRoleName}
         PortfolioId:
-          Ref: SCServerlessportfolio
+          Ref: SCServerlessPortfolio
         RepoRootURL:
           Ref: RepoRootURL
       TemplateURL:
         Fn::Sub: "${RepoRootURL}serverless/sc-product-serverless-lambda.yml"
       TimeoutInMinutes: 5
 Outputs:
+  PortfolioId:
+    Description: The PortfolioId
+    Value:
+      Ref: SCServerlessPortfolio
   LaunchConstraintRoleARN:
     Condition: CreateLaunchConstraint
     Value:

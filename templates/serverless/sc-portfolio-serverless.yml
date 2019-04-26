@@ -16,7 +16,7 @@ Metadata:
       - LaunchRoleName
       - LinkedRole1
       - LinkedRole2
-      - CreateEndUsers
+      - CreateEndUsersGroup
     - Label:
         default: Product Settings
       Parameters:
@@ -53,23 +53,34 @@ Parameters:
   RepoRootURL:
     Type: String
     Description: Root url for the repo containing the product templates.
-  CreateEndUsers:
+  CreateEndUsersGroup:
     Type: String
-    Description: Select Yes to Create the ServiceCatalogEndusers IAM group. No if
+    Description: Select Yes to Create the ServiceCatalogEndUsers IAM group. No if
       you have already created the group
     AllowedValues:
     - 'Yes'
     - 'No'
     Default: 'Yes'
+  ServiceCatalogEndUsers:
+    Type: CommaDelimitedList
+    Description: (Optional) Users to add ServiceCatalogEndUsers.
+    Default: ''
 Conditions:
   CreateLaunchConstraint:
     Fn::Equals:
     - Ref: LaunchRoleName
     - ''
-  CondCreateEndUsers:
+  CondCreateEndUsersGroup:
     Fn::Equals:
-    - Ref: CreateEndUsers
+    - Ref: CreateEndUsersGroup
     - 'Yes'
+  CondHasEndUsers: 
+    Fn::Not:
+    - Fn::Equals:
+      - Fn::Join:
+        - ''
+        - Ref: ServiceCatalogEndUsers
+      - ''
   CondLinkRole1:
     Fn::Not:
     - Fn::Equals:
@@ -115,9 +126,9 @@ Resources:
       TemplateURL:
         Fn::Sub: "${RepoRootURL}iam/sc-serverless-launchrole.yml"
       TimeoutInMinutes: 5
-  stackServiceCatalogEndusers:
+  stackServiceCatalogEndUsers:
     Type: AWS::CloudFormation::Stack
-    Condition: CondCreateEndUsers
+    Condition: CondCreateEndUsersGroup
     Properties:
       TemplateURL:
         Fn::Sub: "${RepoRootURL}iam/sc-enduser-iam.yml"
@@ -127,14 +138,25 @@ Resources:
     Properties:
       PrincipalARN:
         Fn::If:
-        - CondCreateEndUsers
+        - CondCreateEndUsersGroup
         - Fn::GetAtt:
-          - stackServiceCatalogEndusers
+          - stackServiceCatalogEndUsers
           - Outputs.EndUserGroupArn
-        - Fn::Sub: arn:aws:iam::${AWS::AccountId}:group/ServiceCatalogEndusers
+        - Fn::Sub: arn:aws:iam::${AWS::AccountId}:group/ServiceCatalogEndUsers
       PortfolioId:
         Ref: SCServerlessPortfolio
       PrincipalType: IAM
+  AddUsersToGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Condition: CondCreateEndUsersGroup
+    Properties: 
+      GroupName: 
+        !GetAtt
+        - stackServiceCatalogEndUsers
+        - Outputs.EndUserGroupName
+      Users:
+        Ref: ServiceCatalogEndUsers
+    DependsOn: stackServiceCatalogEndUsers
   serverlessproduct:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -187,3 +209,6 @@ Outputs:
       Fn::GetAtt:
       - serverlessproduct
       - Outputs.ProvisioningArtifactNames
+  PortfolioProvider:
+    Value:
+      Ref: PortfolioProvider

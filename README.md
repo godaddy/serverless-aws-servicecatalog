@@ -83,14 +83,14 @@ aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s
   a. using the AWS cli
 
   ```shell
-      aws iam add-user-to-group --group-name ServiceCatalogEndusers --user-name $SERVERLESS-USER
+      aws iam add-user-to-group --group-name ServiceCatalogEndUsers --user-name $SERVERLESS-USER
   ``` 
   
   b. or in the AWS console
    - in IAM, click on the serverless user
    - click Groups
    - click Add user to group
-   - select the ServiceCatalogEndusers group and click "Add to Group"
+   - select the ServiceCatalogEndUsers group and click "Add to Group"
 
 ### 4. Configure the serveless.yml in your lambda project
 

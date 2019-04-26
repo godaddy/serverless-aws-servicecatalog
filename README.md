@@ -30,7 +30,7 @@ provider:
     PortfolioProvider: "SERVICE-CATALOG-PORTFOLIO-PROVIDER"
     LaunchConstraintARN: arn:aws:iam::ID:role/LAUNCH-ROLE
     PortfolioId: PORTFOLIO-ID
-    RepoRootURL: S3-BUCKET-OR-REPO-URL
+    RepoRootURL: S3-BUCKET-URL
 ```
 
 
@@ -57,7 +57,7 @@ aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s
   a. using the AWS cli:
 
   ```shell
-  aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --template-url "https://s3.amazonaws.com/$S3BUCKET/serverless/sc-portfolio-serverless.yml" --parameters ParameterKey=PorfolioName,ParameterValue=ServerlessPortfolio ParameterKey=RepoRootURL,ParameterValue="https://s3.amazonaws.com/$S3BUCKET/" --capabilities CAPABILITY_NAMED_IAM
+  aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --template-url "https://s3.amazonaws.com/$S3BUCKET/serverless/sc-portfolio-serverless.yml" --parameters ParameterKey=PorfolioName,ParameterValue=ServerlessPortfolio ParameterKey=RepoRootURL,ParameterValue="https://s3.amazonaws.com/$S3BUCKET/" ParameterKey=ServiceCatalogEndUsers,ParameterValue=$SERVICE_USER  --capabilities CAPABILITY_NAMED_IAM
   ```    
     (note: trailing / is required on the RepoRootUrl param)
 
@@ -75,46 +75,53 @@ aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s
 
   - Enter RepoRootUrl param: https://s3.amazonaws.com/S3BUCKET/ ( NOTE: the trailing slash is required )
 
+  - For ServiceCatalogEndUsers, enter a comma delimited list of users to add to the generated group
+
   - Click Next, Next and check the acknowledgement checkboxes
 
   - Click Create
 
-### 3. Set Permissions (using admin user credentials)
-  a. using the AWS cli
+### 3. Configure the serveless.yml in your lambda project
 
-  ```shell
-      aws iam add-user-to-group --group-name ServiceCatalogEndUsers --user-name $SERVERLESS-USER
-  ``` 
-  
-  b. or in the AWS console
-   - in IAM, click on the serverless user
-   - click Groups
-   - click Add user to group
-   - select the ServiceCatalogEndUsers group and click "Add to Group"
+a. get the output params
 
-### 4. Configure the serveless.yml in your lambda project
-
-a. update the portfolio info
+  1. using the cli
 ```shell 
-  aws servicecatalog list-portfolios 
+  aws cloudformation  describe-stacks --stack-name Serverless-SC-Portfolio-Stack
 ```
-  - copy the Id value to PortfolioId
-  - copy ProviderName to PortfolioProvider
+  2. or in the AWS Console
 
- b. update the launch contraint
+    - in CloudFormation, open the Serverless-SC-Portfolio-Stack stack
+    - expand Outputs
+b. under provider, enter the settings
+  - enter a S3 bucket name to provider.deploymentBucket
+  - copy serverlessProductId to scProductId
+  - copy serverlessProvisioningArtifactNames to scProductVersion
+  - enter the region
+c. under provider.parameters, enter the settings
+  - copy PortfolioProvider to PortfolioProvider
+  - copy LaunchConstraintRoleARN to LaunchConstraintARN
+  - copy PortfolioId to PortfolioId
+  - enter the bucket with your templates for RepoRootUrl  
+
+ ```yaml
+provider:
+  name: aws
+  runtime: python2.7
+  deploymentBucket: [deploymentbucket]
+  scProductId: [serverlessProductId]
+  scProductVersion: [serverlessProvisioningArtifactNames]
+  region: [region]
+  parameters:
+    PortfolioProvider: [PortfolioProvider]
+    LaunchConstraintARN: [LaunchConstraintRoleARN]
+    PortfolioId: [PortfolioId]
+    RepoRootURL: https://[templatebucket].s3.amazonaws.com/
+
+ ```
+
+### 4. Deploy (using serverless user credentials)
+
 ```shell
-aws servicecatalog list-constraints-for-portfolio  --portfolio-id PORTFOLIO_ID  
-```
-  - copy the Description value to LaunchConstraintARN
-
-c. update the productId
-```
-aws servicecatalog search-products
-``` 
-  - copy the ProductId value to scProductId
-
-### 5. Deploy (using serverless user credentials)
-
-```shell
-serverless deploy
+serverless deploy -v
 ```

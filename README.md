@@ -21,16 +21,13 @@ plugins:
 ```yaml
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: RUNTIME
   deploymentBucket: S3-BUCKET
   scProductId: SERVICE-CATALOG-PRODUCT-ID
   scProductVersion: SERVICE-CATALOG-PRODUCT-VERSION
   # scProductTemplate: ./CUSTOM-TEMPLATE # optionally override the default template
   parameters:
-    PortfolioProvider: "SERVICE-CATALOG-PORTFOLIO-PROVIDER"
-    LaunchConstraintARN: arn:aws:iam::ID:role/LAUNCH-ROLE
-    PortfolioId: PORTFOLIO-ID
-    RepoRootURL: S3-BUCKET-URL
+    customServiceCatalogProductParam: VALUE
 ```
 
 

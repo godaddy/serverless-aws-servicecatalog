@@ -179,7 +179,7 @@ Resources:
       TimeoutInMinutes: 5
 Outputs:
   PortfolioId:
-    Description: The PortfolioId
+    Description: The Service Catalog portfolioId
     Value:
       Ref: SCServerlessPortfolio
   LaunchConstraintRoleARN:
@@ -195,6 +195,7 @@ Outputs:
       - LaunchConstraintRole
       - Outputs.LaunchRoleName
   serverlessProductId:
+    Description: The Service Catalog Lambda productId.
     Value:
       Fn::GetAtt:
       - serverlessproduct
@@ -210,5 +211,6 @@ Outputs:
       - serverlessproduct
       - Outputs.ProvisioningArtifactNames
   PortfolioProvider:
+    Description: The name of the portfolio admin
     Value:
       Ref: PortfolioProvider

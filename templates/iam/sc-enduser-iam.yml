@@ -3,7 +3,7 @@ Resources:
   SCEnduserGroup:
     Type: AWS::IAM::Group
     Properties:
-      GroupName: ServiceCatalogEndusers
+      GroupName: ServiceCatalogEndUsers
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/ServiceCatalogEndUserAccess
       Path: /      
@@ -17,7 +17,7 @@ Resources:
             Action: 
               - "servicecatalog:ProvisionProduct"
             Resource: "*"
-      PolicyName:  ServiceCatalogEndusers-AdditionalPermissions
+      PolicyName:  ServiceCatalogEndUsers-AdditionalPermissions
       Groups:
         - !Ref SCEnduserGroup
 Outputs:

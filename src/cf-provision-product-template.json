@@ -1,5 +1,6 @@
 {
   "Type": "AWS::ServiceCatalog::CloudFormationProvisionedProduct",
+
   "Properties": {
     "ProvisioningParameters": [
       {

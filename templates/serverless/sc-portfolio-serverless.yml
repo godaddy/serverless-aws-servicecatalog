@@ -16,7 +16,7 @@ Metadata:
       - LaunchRoleName
       - LinkedRole1
       - LinkedRole2
-      - CreateEndUsers
+      - CreateEndUsersGroup
     - Label:
         default: Product Settings
       Parameters:
@@ -39,34 +39,48 @@ Parameters:
     Type: String
     Description: Name of the launch constraint role for Serverless products. leave
       this blank to create the role.
+    Default: ''
   LinkedRole1:
     Type: String
     Description: "(Optional) The name of a role which can execute products in this
       portfolio."
+    Default: ''
   LinkedRole2:
     Type: String
     Description: "(Optional) The name of a second role which can execute products
       in this portfolio."
+    Default: ''
   RepoRootURL:
     Type: String
     Description: Root url for the repo containing the product templates.
-  CreateEndUsers:
+  CreateEndUsersGroup:
     Type: String
-    Description: Select Yes to Create the ServiceCatalogEndusers IAM group. No if
+    Description: Select Yes to Create the ServiceCatalogEndUsers IAM group. No if
       you have already created the group
     AllowedValues:
     - 'Yes'
     - 'No'
     Default: 'Yes'
+  ServiceCatalogEndUsers:
+    Type: CommaDelimitedList
+    Description: (Optional) Users to add ServiceCatalogEndUsers.
+    Default: ''
 Conditions:
   CreateLaunchConstraint:
     Fn::Equals:
     - Ref: LaunchRoleName
     - ''
-  CondCreateEndUsers:
+  CondCreateEndUsersGroup:
     Fn::Equals:
-    - Ref: CreateEndUsers
+    - Ref: CreateEndUsersGroup
     - 'Yes'
+  CondHasEndUsers: 
+    Fn::Not:
+    - Fn::Equals:
+      - Fn::Join:
+        - ''
+        - Ref: ServiceCatalogEndUsers
+      - ''
   CondLinkRole1:
     Fn::Not:
     - Fn::Equals:
@@ -78,7 +92,7 @@ Conditions:
       - Ref: LinkedRole2
       - ''
 Resources:
-  SCServerlessportfolio:
+  SCServerlessPortfolio:
     Type: AWS::ServiceCatalog::Portfolio
     Properties:
       ProviderName:
@@ -94,7 +108,7 @@ Resources:
       PrincipalARN:
         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LinkedRole1}
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
   addrole2:
     Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
@@ -103,7 +117,7 @@ Resources:
       PrincipalARN:
         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LinkedRole2}
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
   LaunchConstraintRole:
     Type: AWS::CloudFormation::Stack
@@ -112,9 +126,9 @@ Resources:
       TemplateURL:
         Fn::Sub: "${RepoRootURL}iam/sc-serverless-launchrole.yml"
       TimeoutInMinutes: 5
-  stackServiceCatalogEndusers:
+  stackServiceCatalogEndUsers:
     Type: AWS::CloudFormation::Stack
-    Condition: CondCreateEndUsers
+    Condition: CondCreateEndUsersGroup
     Properties:
       TemplateURL:
         Fn::Sub: "${RepoRootURL}iam/sc-enduser-iam.yml"
@@ -124,14 +138,25 @@ Resources:
     Properties:
       PrincipalARN:
         Fn::If:
-        - CondCreateEndUsers
+        - CondCreateEndUsersGroup
         - Fn::GetAtt:
-          - stackServiceCatalogEndusers
+          - stackServiceCatalogEndUsers
           - Outputs.EndUserGroupArn
-        - Fn::Sub: arn:aws:iam::${AWS::AccountId}:group/ServiceCatalogEndusers
+        - Fn::Sub: arn:aws:iam::${AWS::AccountId}:group/ServiceCatalogEndUsers
       PortfolioId:
-        Ref: SCServerlessportfolio
+        Ref: SCServerlessPortfolio
       PrincipalType: IAM
+  AddUsersToGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Condition: CondCreateEndUsersGroup
+    Properties: 
+      GroupName: 
+        !GetAtt
+        - stackServiceCatalogEndUsers
+        - Outputs.EndUserGroupName
+      Users:
+        Ref: ServiceCatalogEndUsers
+    DependsOn: stackServiceCatalogEndUsers
   serverlessproduct:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -146,13 +171,17 @@ Resources:
             - Outputs.LaunchRoleArn
           - Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${LaunchRoleName}
         PortfolioId:
-          Ref: SCServerlessportfolio
+          Ref: SCServerlessPortfolio
         RepoRootURL:
           Ref: RepoRootURL
       TemplateURL:
         Fn::Sub: "${RepoRootURL}serverless/sc-product-serverless-lambda.yml"
       TimeoutInMinutes: 5
 Outputs:
+  PortfolioId:
+    Description: The Service Catalog portfolioId
+    Value:
+      Ref: SCServerlessPortfolio
   LaunchConstraintRoleARN:
     Condition: CreateLaunchConstraint
     Value:
@@ -166,6 +195,7 @@ Outputs:
       - LaunchConstraintRole
       - Outputs.LaunchRoleName
   serverlessProductId:
+    Description: The Service Catalog Lambda productId.
     Value:
       Fn::GetAtt:
       - serverlessproduct
@@ -180,3 +210,7 @@ Outputs:
       Fn::GetAtt:
       - serverlessproduct
       - Outputs.ProvisioningArtifactNames
+  PortfolioProvider:
+    Description: The name of the portfolio admin
+    Value:
+      Ref: PortfolioProvider

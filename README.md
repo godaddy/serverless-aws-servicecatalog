@@ -1,7 +1,7 @@
 # serverless-aws-service-catalog
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 
-A plugin to allow the provisioning of AWS Service Catalog products with [serverless](http://www.serverless.com)
+A plugin to allow the provisioning of [AWS Service Catalog](https://console.aws.amazon.com/servicecatalog) products with [serverless](http://www.serverless.com)
 
 
 ## Install
@@ -42,11 +42,11 @@ provider:
 
 ## Example
 There are 2 ways to setup the example, using the launch-stack button or manually from your own S3 bucket.  Both methods result in a 
-AWS CloudFormation stack with outputs that will be used as parameters in the serverless.yml config.
+AWS CloudFormation stack with outputs that will be used as parameters in the `serverless.yml` config.
 
 
 ### Express Setup using launch-stack
-1. Use the launch stack button below to setup your account.  
+1. Click the button below to setup your account.  
     [![CreateStack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/#/stacks/new?stackName=Serverless-SC-Portfolio-Stack&templateURL=https://s3.amazonaws.com/aws-service-catalog-reference-architectures/serverless/sc-portfolio-serverless.yml)  
     https://s3.amazonaws.com/aws-service-catalog-reference-architectures/serverless/sc-portfolio-serverless.yml
 
@@ -85,8 +85,9 @@ aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --tem
 
 
 
-### Configure the serveless.yml in your lambda project
+### Configure your Serverless Framework project
 Regardless of how you deployed the CloudFormation above, you now need to copy the output values from CloudFormation to your `serverless.yml` file.
+This is only covering the AWS provider section and assumes you have a complete config for serverless.  See the [Serverless Framework examples](https://github.com/serverless/examples) for more details.
 
 1. get the output params  
     a. using the cli

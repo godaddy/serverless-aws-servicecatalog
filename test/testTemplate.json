@@ -1,37 +1,38 @@
 {
   "Type": "AWS::ServiceCatalog::CloudFormationProvisionedProduct",
+
   "Properties": {
     "ProvisioningParameters": [
       {
-        "Key": "BucketName",
+        "Key": "S3Bucket",
         "Value": "ServerlessDeploymentBucket"
       },
       {
-        "Key": "BucketKey",
+        "Key": "S3Key",
         "Value": "S3Key"
       },
       {
-        "Key": "FunctionName",
-        "Value": "FunctionName"
+        "Key": "LambdaName",
+        "Value": "LambdaName"
       },
       {
-        "Key": "FunctionStage",
+        "Key": "LambdaStage",
         "Value": "test"
       },
       {
-        "Key": "FunctionHandler",
+        "Key": "Handler",
         "Value": "Handler"
       },
       {
-        "Key": "FunctionRuntime",
+        "Key": "Runtime",
         "Value": "Runtime"
       },
       {
-        "Key": "FunctionMemorySize",
+        "Key": "MemorySize",
         "Value": "MemorySize"
       },
       {
-        "Key": "FunctionTimeout",
+        "Key": "Timeout",
         "Value": "Timeout"
       },
       {
@@ -46,7 +47,7 @@
     "ProvisioningArtifactName": "ProvisioningArtifactName",
     "ProductId": "ProductId",
     "ProvisionedProductName": {
-      "Fn::Sub": "provisionServerless-${FunctionName}"
+      "Fn::Sub": "provisionServerless-${LambdaName}"
     }
   }
 }

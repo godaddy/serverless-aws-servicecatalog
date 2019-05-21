@@ -43,7 +43,7 @@ class AwsCompileServiceCatalog {
     let templateJson;
     let parsedTemplate;
     try {
-      templateJson = fs.readFileSync(templateFile);
+      templateJson = fs.readFileSync(templateFile, 'utf8');
     } catch (ex) {
       this.serverless.cli.log('error reading template file:: ', templateFile);
       process.exit(1);
@@ -95,7 +95,7 @@ class AwsCompileServiceCatalog {
         '.serverless', artifactFileName);
     }
     if (this.serverless.service.provider.deploymentBucket) {
-      setProvisioningParamValue('BucketName', this.serverless.service.provider.deploymentBucket);
+      setProvisioningParamValue('S3Bucket', this.serverless.service.provider.deploymentBucket);
     } else {
       const errorMessage = 'Missing provider.deploymentBucket parameter.'
         + ' Please make sure you provide a deployment bucket parameter. SC Provisioned Product cannot create an S3 Bucket.'
@@ -105,7 +105,7 @@ class AwsCompileServiceCatalog {
 
     const s3Folder = this.serverless.service.package.artifactDirectoryName;
     const s3FileName = artifactFilePath.split(path.sep).pop();
-    setProvisioningParamValue('BucketKey', `${s3Folder}/${s3FileName}`);
+    setProvisioningParamValue('S3Key', `${s3Folder}/${s3FileName}`);
 
     if (!functionObject.handler) {
       const errorMessage = `Missing "handler" property in function "${functionName}".`
@@ -125,12 +125,12 @@ class AwsCompileServiceCatalog {
       || this.serverless.service.provider.runtime
       || 'nodejs4.3';
 
-    setProvisioningParamValue('FunctionHandler', functionObject.handler);
-    setProvisioningParamValue('FunctionName', functionObject.name);
-    setProvisioningParamValue('FunctionMemorySize', MemorySize);
-    setProvisioningParamValue('FunctionTimeout', Timeout);
-    setProvisioningParamValue('FunctionRuntime', Runtime);
-    setProvisioningParamValue('FunctionStage', this.provider.getStage());
+    setProvisioningParamValue('Handler', functionObject.handler);
+    setProvisioningParamValue('LambdaName', functionObject.name);
+    setProvisioningParamValue('MemorySize', MemorySize);
+    setProvisioningParamValue('Timeout', Timeout);
+    setProvisioningParamValue('Runtime', Runtime);
+    setProvisioningParamValue('LambdaStage', this.provider.getStage());
     const serviceProvider = this.serverless.service.provider;
     newFunction.Properties.ProvisioningArtifactName = serviceProvider.scProductVersion;
     newFunction.Properties.ProductId = serviceProvider.scProductId;
@@ -149,6 +149,32 @@ class AwsCompileServiceCatalog {
       );
       newFunction.Properties.Tags = Object.keys(tags).map(key => (
         { Key: key, Value: tags[key] }));
+    }
+
+    if (functionObject.provisioningParameters
+        || this.serverless.service.provider.provisioningParameters) {
+      const provisioningParameters = Object.assign(
+        {},
+        this.serverless.service.provider.provisioningParameters,
+        functionObject.provisioningParameters,
+      );
+
+      let errorMessage = null;
+      if (Object.entries(provisioningParameters).some(([key, value]) => {
+        if (newFunction.Properties.ProvisioningParameters.some(p => p.Key === key)) {
+          errorMessage = `Duplicate provisioning parameter "${key}" found.`
+            + ' Please make sure that all items listed in "provisioningParameters" are unique.';
+          return true;
+        }
+
+        newFunction.Properties.ProvisioningParameters.push({
+          Key: key,
+          Value: value,
+        });
+        return false;
+      })) {
+        return BbPromise.reject(this.serverless.classes.Error(errorMessage));
+      }
     }
 
     const fileHash = crypto.createHash('sha256');

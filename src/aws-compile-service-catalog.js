@@ -177,33 +177,16 @@ class AwsCompileServiceCatalog {
       }
     }
 
-    const fileHash = crypto.createHash('sha256');
-    fileHash.setEncoding('base64');
-
-    return BbPromise.fromCallback((cb) => {
-      const readStream = fs.createReadStream(artifactFilePath);
-      readStream.on('data', (chunk) => {
-        fileHash.write(chunk);
-      })
-        .on('end', cb)
-        .on('error', cb);
-    })
-      .then(() => {
-        // Finalize hashes
-        fileHash.end();
-        const fileDigest = fileHash.read();
-        setProvisioningParamValue('LambdaVersionSHA256', fileDigest);
-        // eslint-disable-next-line max-len
-        const functionLogicalId = `${this.provider.naming.getLambdaLogicalId(functionName)}SCProvisionedProduct`;
-        // eslint-disable-next-line max-len
-        this.serverless.service.provider.compiledCloudFormationTemplate.Resources[functionLogicalId] = newFunction;
-        // eslint-disable-next-line max-len
-        this.serverless.service.provider.compiledCloudFormationTemplate.Outputs.ProvisionedProductID = {
-          Description: 'Provisioned product ID',
-          Value: { Ref: functionLogicalId },
-        };
-        return BbPromise.resolve();
-      });
+    // eslint-disable-next-line max-len
+    const functionLogicalId = `${this.provider.naming.getLambdaLogicalId(functionName)}SCProvisionedProduct`;
+    // eslint-disable-next-line max-len
+    this.serverless.service.provider.compiledCloudFormationTemplate.Resources[functionLogicalId] = newFunction;
+    // eslint-disable-next-line max-len
+    this.serverless.service.provider.compiledCloudFormationTemplate.Outputs.ProvisionedProductID = {
+      Description: 'Provisioned product ID',
+      Value: { Ref: functionLogicalId },
+    };
+    return BbPromise.resolve();
   }
 }
 

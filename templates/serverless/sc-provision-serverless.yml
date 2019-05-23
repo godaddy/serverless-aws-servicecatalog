@@ -45,8 +45,6 @@ Parameters:
   Timeout:
     Type: Number
     Default: 5
-  LambdaVersionSHA256:
-    Type: String
 Resources:
   SCprovisionServerless:
     Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
@@ -76,9 +74,6 @@ Resources:
       - Key: Timeout
         Value:
           Ref: Timeout
-      - Key: LambdaVersionSHA256
-        Value:
-          Ref: LambdaVersionSHA256
       ProvisioningArtifactName:
         Ref: ProductArtifactName
       ProductId:

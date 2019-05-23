@@ -41,20 +41,6 @@ Parameters:
   LambdaVersionSHA256:
     Type: String
     Default: ''
-  LambdaVersionSHA256update:
-    Type: String
-    Default: ''
-Conditions:
-  addlambdaversion:
-    Fn::Not:
-    - Fn::Equals:
-      - Ref: LambdaVersionSHA256
-      - ''
-  updatelambdaversion:
-    Fn::Not:
-    - Fn::Equals:
-      - Ref: LambdaVersionSHA256update
-      - ''
 Resources:
   AppLogGroup:
     Type: AWS::Logs::LogGroup

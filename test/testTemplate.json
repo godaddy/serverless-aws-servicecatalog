@@ -35,10 +35,6 @@
         "Key": "Timeout",
         "Value": "Timeout"
       },
-      {
-        "Key": "LambdaVersionSHA256",
-        "Value": "CodeSha256"
-      },
       { 
         "Key": "CustomParam",
         "Value": "CustomValue"

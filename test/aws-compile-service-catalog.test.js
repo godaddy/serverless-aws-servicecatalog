@@ -61,6 +61,10 @@ describe('AwsCompileFunctions', () => {
           individualArtifact),
       },
       handler: 'handler.hello',
+      environment: {
+        DEV: 'dev',
+        TEST: 'tests',
+      },
     };
     awsCompileServiceCatalog.serverless.service.functions[functionNameBye] = {
       name: 'test-bye',
@@ -86,8 +90,27 @@ describe('AwsCompileFunctions', () => {
             .compiledCloudFormationTemplate.Resources[productNameHello];
           expect(functionResource.Type).to.equal('AWS::ServiceCatalog::CloudFormationProvisionedProduct');
           expect(functionResource.Properties.ProductId).to.equal(testProvider.scProductId);
+          expect(functionResource.Properties.Environment.Variables.DEV).to.equal('dev');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-hello');
         });
+    });
+    it('should reject invalid environment keys', () => {
+      setup();
+      awsCompileServiceCatalog.serverless.service.functions[functionNameHello].environment = {
+        OK: 'value1',
+        'FOO$@~': 'value2',
+      };
+      expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Invalid characters in environment variable FOO$@~');
+    });
+    it('should reject invalid environment key values', () => {
+      setup();
+      awsCompileServiceCatalog.serverless.service.functions[functionNameHello].environment = {
+        OK: 'value1',
+        OK_CFRef: ['Ref'],
+        OK_FN: ['Fn::GetAtt'],
+        NOT_OK: ['foo'],
+      };
+      expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Environment variable NOT_OK must contain string');
     });
     it('should override the template when the template', () => {
       const providerProps = {

@@ -2,7 +2,6 @@
 
 const BbPromise = require('bluebird');
 const path = require('path');
-const crypto = require('crypto');
 const fs = require('fs');
 
 class AwsCompileServiceCatalog {
@@ -151,6 +150,31 @@ class AwsCompileServiceCatalog {
         { Key: key, Value: tags[key] }));
     }
 
+    if (functionObject.environment || this.serverless.service.provider.environment) {
+      const environment = Object.assign(
+        {},
+        this.serverless.service.provider.environment || {},
+        functionObject.environment || {},
+      );
+      const envKeys = Object.keys(environment);
+      envKeys.forEach((key) => {
+        // taken from the bash man pages
+        if (!key.match(/^[A-Za-z_][a-zA-Z0-9_]*$/)) {
+          return BbPromise.reject(new this.serverless.classes.Error(`Invalid characters in environment variable name ${key}`));
+        }
+        const value = environment[key];
+        if (value === Object(value)) {
+          const isCFRef = !value.some(v => v !== 'Ref' && !v.startsWith('Fn::'));
+          if (!isCFRef) {
+            return BbPromise.reject(new this.serverless.classes.Error(`Environment variable ${key} must contain string`));
+          }
+        }
+      });
+      newFunction.Properties.ProvisioningParameters.push({
+        Key: 'EnvironmentVariablesJson',
+        Value: JSON.stringify(environment),
+      });
+    }
     if (functionObject.provisioningParameters
         || this.serverless.service.provider.provisioningParameters) {
       const provisioningParameters = Object.assign(

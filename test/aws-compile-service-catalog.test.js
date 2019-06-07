@@ -21,11 +21,17 @@ describe('AwsCompileFunctions', () => {
   const functionNameBye = 'testBye';
   const productNameHello = 'TestHelloLambdaFunctionSCProvisionedProduct';
   const productNameBye = 'TestByeLambdaFunctionSCProvisionedProduct';
+  const testEnvironment = {
+    DEV: 'dev',
+    TEST: 'test',
+  };
 
   const setup = (providerProps) => {
     const options = { stage: 'dev', region: 'us-east-1' };
     const serviceArtifact = 'new-service.zip';
     const individualArtifact = 'test.zip';
+    
+
     testProvider = {
       deploymentBucket: 'test-bucket',
       scProdcutVersion: 'v1.0',
@@ -61,10 +67,7 @@ describe('AwsCompileFunctions', () => {
           individualArtifact),
       },
       handler: 'handler.hello',
-      environment: {
-        DEV: 'dev',
-        TEST: 'tests',
-      },
+      environment: testEnvironment,
     };
     awsCompileServiceCatalog.serverless.service.functions[functionNameBye] = {
       name: 'test-bye',
@@ -90,8 +93,17 @@ describe('AwsCompileFunctions', () => {
             .compiledCloudFormationTemplate.Resources[productNameHello];
           expect(functionResource.Type).to.equal('AWS::ServiceCatalog::CloudFormationProvisionedProduct');
           expect(functionResource.Properties.ProductId).to.equal(testProvider.scProductId);
-          expect(functionResource.Properties.Environment.Variables.DEV).to.equal('dev');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-hello');
+        });
+    });
+    it('should pass the environment parameters as json', () => {
+      setup();
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          const envParams = functionResource.Properties.ProvisioningParameters.find(k => k.Key === 'EnvironmentVariablesJson');
+          expect(envParams.Value).to.equal(JSON.stringify(testEnvironment));
         });
     });
     it('should reject invalid environment keys', () => {

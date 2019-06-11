@@ -36,6 +36,12 @@
         "Value": "Timeout"
       }
     ],
+    "Tags":[
+      {
+        "Key": "doNotShutDown",
+        "Value": "false"
+      }
+    ],
     "ProvisioningArtifactName": "ProvisioningArtifactName",
     "ProductId": "ProductId",
     "ProvisionedProductName": {

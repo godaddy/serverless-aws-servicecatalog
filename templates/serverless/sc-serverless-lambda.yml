@@ -38,6 +38,10 @@ Parameters:
   Timeout:
     Type: Number
     Default: 6
+   EnvironmentVariablesJson:
+    Type: String
+    Default: "{}"
+    Description: (optional) Pass environment variables to the Lambda function. This has to be a JSON escaped string.
   LambdaVersionSHA256:
     Type: String
     Default: ''

@@ -21,11 +21,17 @@ describe('AwsCompileFunctions', () => {
   const functionNameBye = 'testBye';
   const productNameHello = 'TestHelloLambdaFunctionSCProvisionedProduct';
   const productNameBye = 'TestByeLambdaFunctionSCProvisionedProduct';
+  const testEnvironment = {
+    DEV: 'dev',
+    TEST: 'test',
+  };
 
   const setup = (providerProps) => {
     const options = { stage: 'dev', region: 'us-east-1' };
     const serviceArtifact = 'new-service.zip';
     const individualArtifact = 'test.zip';
+    
+
     testProvider = {
       deploymentBucket: 'test-bucket',
       scProdcutVersion: 'v1.0',
@@ -61,6 +67,7 @@ describe('AwsCompileFunctions', () => {
           individualArtifact),
       },
       handler: 'handler.hello',
+      environment: testEnvironment,
     };
     awsCompileServiceCatalog.serverless.service.functions[functionNameBye] = {
       name: 'test-bye',
@@ -88,6 +95,34 @@ describe('AwsCompileFunctions', () => {
           expect(functionResource.Properties.ProductId).to.equal(testProvider.scProductId);
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-hello');
         });
+    });
+    it('should pass the environment parameters as json', () => {
+      setup();
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          const envParams = functionResource.Properties.ProvisioningParameters.find(k => k.Key === 'EnvironmentVariablesJson');
+          expect(envParams.Value).to.equal(JSON.stringify(testEnvironment));
+        });
+    });
+    it('should reject invalid environment keys', () => {
+      setup();
+      awsCompileServiceCatalog.serverless.service.functions[functionNameHello].environment = {
+        OK: 'value1',
+        'FOO$@~': 'value2',
+      };
+      expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Invalid characters in environment variable FOO$@~');
+    });
+    it('should reject invalid environment key values', () => {
+      setup();
+      awsCompileServiceCatalog.serverless.service.functions[functionNameHello].environment = {
+        OK: 'value1',
+        OK_CFRef: ['Ref'],
+        OK_FN: ['Fn::GetAtt'],
+        NOT_OK: ['foo'],
+      };
+      expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Environment variable NOT_OK must contain string');
     });
     it('should override the template when the template', () => {
       const providerProps = {

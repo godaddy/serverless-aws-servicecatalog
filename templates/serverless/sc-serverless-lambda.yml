@@ -38,13 +38,25 @@ Parameters:
   Timeout:
     Type: Number
     Default: 6
-   EnvironmentVariablesJson:
+  EnvironmentVariablesJson:
     Type: String
     Default: "{}"
     Description: (optional) Pass environment variables to the Lambda function. This has to be a JSON escaped string.
   LambdaVersionSHA256:
     Type: String
     Default: ''
+  VpcSecurityGroups:
+    Type: CommaDelimitedList
+    Description: (optional) The list of security group ids of the VPC that needs to be accessed.
+    Default: ""
+  VpcSubnetIds:
+    Type: CommaDelimitedList
+    Description: (optional) The list of subnet Ids within the VPC that needs access to.
+    Default: ""  
+Conditions:
+  UsingVPC: !And
+  - !Not [ !Equals [ !Join [ "", !Ref VpcSubnetIds ], "" ] ]
+  - !Not [ !Equals [ !Join [ "", !Ref VpcSecurityGroups ], "" ] ]
 Resources:
   AppLogGroup:
     Type: AWS::Logs::LogGroup
@@ -90,7 +102,7 @@ Resources:
           Ref: S3Bucket
         S3Key:
           Ref: S3Key
-      LambdaName:
+      FunctionName:
         Fn::Sub: "${LambdaName}"
       Handler:
         Ref: Handler
@@ -104,6 +116,11 @@ Resources:
         Ref: Runtime
       Timeout:
         Ref: Timeout
+      VpcConfig: !If
+        - UsingVPC
+        - SecurityGroupIds: !Ref VpcSecurityGroups
+          SubnetIds: !Ref VpcSubnetIds
+        - !Ref "AWS::NoValue"
     DependsOn:
     - AppLogGroup
     - IamRoleLambdaExecution
@@ -184,7 +201,7 @@ Resources:
   AppLambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission
     Properties:
-      LambdaName:
+      FunctionName:
         Fn::GetAtt:
         - AppLambdaFunction
         - Arn

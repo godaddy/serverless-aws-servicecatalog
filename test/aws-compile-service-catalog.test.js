@@ -25,12 +25,15 @@ describe('AwsCompileFunctions', () => {
     DEV: 'dev',
     TEST: 'test',
   };
+  const testVpc = {
+    securityGroupIds: ['group1', 'group2'],
+    subnetIds: ['subnet1', 'subnet2'],
+  };
 
   const setup = (providerProps) => {
     const options = { stage: 'dev', region: 'us-east-1' };
     const serviceArtifact = 'new-service.zip';
     const individualArtifact = 'test.zip';
-    
 
     testProvider = {
       deploymentBucket: 'test-bucket',
@@ -68,6 +71,7 @@ describe('AwsCompileFunctions', () => {
       },
       handler: 'handler.hello',
       environment: testEnvironment,
+      vpc: testVpc,
     };
     awsCompileServiceCatalog.serverless.service.functions[functionNameBye] = {
       name: 'test-bye',
@@ -113,6 +117,18 @@ describe('AwsCompileFunctions', () => {
         'FOO$@~': 'value2',
       };
       expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Invalid characters in environment variable FOO$@~');
+    });
+    it('should set the vpc parameters', () => {
+      setup();
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          const securityParam = functionResource.Properties.ProvisioningParameters.find(k => k.Key === 'VpcSecurityGroups');
+          expect(securityParam.Value).to.equal(testVpc.securityGroupIds.toString());
+          const subnetParam = functionResource.Properties.ProvisioningParameters.find(k => k.Key === 'VpcSubnetIds');
+          expect(subnetParam.Value).to.equal(testVpc.subnetIds.toString());
+        });
     });
     it('should reject invalid environment key values', () => {
       setup();

@@ -83,6 +83,13 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DeleteNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            Resource:
+            - "*"
+          - Effect: Allow
+            Action:
             - logs:CreateLogStream
             Resource:
             - Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaName}:*

@@ -169,6 +169,7 @@ class AwsCompileServiceCatalog {
             return BbPromise.reject(new this.serverless.classes.Error(`Environment variable ${key} must contain string`));
           }
         }
+        return true;
       });
       newFunction.Properties.ProvisioningParameters.push({
         Key: 'EnvironmentVariablesJson',
@@ -182,7 +183,6 @@ class AwsCompileServiceCatalog {
         this.serverless.service.provider.provisioningParameters,
         functionObject.provisioningParameters,
       );
-
       let errorMessage = null;
       if (Object.entries(provisioningParameters).some(([key, value]) => {
         if (newFunction.Properties.ProvisioningParameters.some(p => p.Key === key)) {
@@ -200,7 +200,26 @@ class AwsCompileServiceCatalog {
         return BbPromise.reject(this.serverless.classes.Error(errorMessage));
       }
     }
+    if (!functionObject.vpc) {
+      functionObject.vpc = {};
+    } else {
+      const vpcSecurityGroups = functionObject.vpc.securityGroupIds
+        || this.serverless.service.provider.vpc.securityGroupIds;
 
+      const vpcSubnetIds = functionObject.vpc.subnetIds
+        || this.serverless.service.provider.vpc.subnetIds;
+
+      if (vpcSecurityGroups && vpcSubnetIds) {
+        newFunction.Properties.ProvisioningParameters.push({
+          Key: 'VpcSecurityGroups',
+          Value: vpcSecurityGroups.toString(),
+        });
+        newFunction.Properties.ProvisioningParameters.push({
+          Key: 'VpcSubnetIds',
+          Value: vpcSubnetIds.toString(),
+        });
+      }
+    }
     // eslint-disable-next-line max-len
     const functionLogicalId = `${this.provider.naming.getLambdaLogicalId(functionName)}SCProvisionedProduct`;
     // eslint-disable-next-line max-len

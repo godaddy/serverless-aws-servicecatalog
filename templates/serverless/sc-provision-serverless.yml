@@ -74,8 +74,6 @@ Resources:
       - Key: Timeout
         Value:
           Ref: Timeout
-      ProvisioningArtifactName:
-        Ref: ProductArtifactName
       ProductId:
         Ref: ProductId
       ProvisionedProductName:

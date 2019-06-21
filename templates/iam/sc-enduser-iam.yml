@@ -16,6 +16,9 @@ Resources:
           - Effect: "Allow"
             Action: 
               - "servicecatalog:ProvisionProduct"
+              - "ec2:CreateNetworkInterface"
+              - "ec2:DeleteNetworkInterface"        
+              - "ec2:DescribeNetworkInterfaces"
             Resource: "*"
       PolicyName:  ServiceCatalogEndUsers-AdditionalPermissions
       Groups:

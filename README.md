@@ -72,14 +72,14 @@ aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s
 2. Create the Cloudformation stack from the portfolio template.  To allow end users to deploy you will need to edit the params of the CloudFormation template:  
     
     - If you are using IAM users for deployment then go to the ServiceCatalogEndUsers parameter, enter a comma delimited list of users to add to the generated group.  
-    For this example an IAM user is supplied using the `SERVERLESS-USER` variable
+    For this example an IAM user is supplied using the `SERVERLESS_USER` variable
 
     - If you are using role based authentication then supply up to 2 role names in the LinkedRole1 and LinkedRole2 parameters.
  
 ```shell
 export S3BUCKET=yourBucketName
-export SERVERLESS-USER=yourAwsServerlessUser
-aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --template-url "https://s3.amazonaws.com/$S3BUCKET/serverless/sc-portfolio-serverless.yml" --parameters ParameterKey=PorfolioName,ParameterValue=ServerlessPortfolio ParameterKey=RepoRootURL,ParameterValue="https://s3.amazonaws.com/$S3BUCKET/" ParameterKey=ServiceCatalogEndUsers,ParameterValue=$SERVERLESS-USER  --capabilities CAPABILITY_NAMED_IAM
+export SERVERLESS_USER=yourAwsServerlessUser
+aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --template-url "https://s3.amazonaws.com/$S3BUCKET/serverless/sc-portfolio-serverless.yml" --parameters ParameterKey=PorfolioName,ParameterValue=ServerlessPortfolio ParameterKey=RepoRootURL,ParameterValue="https://s3.amazonaws.com/$S3BUCKET/" ParameterKey=ServiceCatalogEndUsers,ParameterValue=$SERVERLESS_USER  --capabilities CAPABILITY_NAMED_IAM
 ```    
 (note: trailing / is required on the RepoRootUrl param)
 

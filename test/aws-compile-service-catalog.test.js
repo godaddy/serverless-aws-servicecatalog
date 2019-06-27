@@ -170,5 +170,17 @@ describe('AwsCompileFunctions', () => {
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-bye');
         });
     });
+    it('should set Layers when specified', () => {
+      setup();
+      awsCompileServiceCatalog.serverless.service.functions[functionNameHello]
+        .layers = ['arn:aws:xxx:*:*'];
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          const securityParam = functionResource.Properties.ProvisioningParameters.find(k => k.Key === 'LambdaLayers');
+          expect(securityParam.Value).to.equal('arn:aws:xxx:*:*');
+        });
+    });
   });
 });

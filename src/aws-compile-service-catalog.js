@@ -220,15 +220,30 @@ class AwsCompileServiceCatalog {
         });
       }
     }
-    // eslint-disable-next-line max-len
+
+    let { layers } = functionObject;
+    if (!layers || !Array.isArray(layers)) {
+      ({ layers } = this.serverless.service.provider);
+      if (!layers || !Array.isArray(layers)) {
+        layers = null;
+      }
+    }
+    layers = layers && layers.toString();
+    if (layers) {
+      newFunction.Properties.ProvisioningParameters.push({
+        Key: 'LambdaLayers',
+        Value: layers,
+      });
+    }
+
     const functionLogicalId = `${this.provider.naming.getLambdaLogicalId(functionName)}SCProvisionedProduct`;
-    // eslint-disable-next-line max-len
-    this.serverless.service.provider.compiledCloudFormationTemplate.Resources[functionLogicalId] = newFunction;
-    // eslint-disable-next-line max-len
-    this.serverless.service.provider.compiledCloudFormationTemplate.Outputs.ProvisionedProductID = {
-      Description: 'Provisioned product ID',
-      Value: { Ref: functionLogicalId },
-    };
+    this.serverless.service.provider.compiledCloudFormationTemplate
+      .Resources[functionLogicalId] = newFunction;
+    this.serverless.service.provider
+      .compiledCloudFormationTemplate.Outputs.ProvisionedProductID = {
+        Description: 'Provisioned product ID',
+        Value: { Ref: functionLogicalId },
+      };
     return BbPromise.resolve();
   }
 }

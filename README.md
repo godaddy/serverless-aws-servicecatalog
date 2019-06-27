@@ -126,3 +126,46 @@ If you have modified the configuration and have your AWS credentials setup accor
 ```shell
 serverless deploy -v
 ```
+
+## Building a Custom Serverless Service Catalog Product
+
+### Custom parameters passed by the plugin
+
+The plugin passes custom parameters for the following Serverless features: (see sc-serverless-lambda.yml)
+
+- **Vpc**: supports the standard Serverless vpc configuration in serverless.yml
+```yaml
+# serverless.yml
+vpc:
+ securityGroupIds:
+   - "sg-XXXXXXXX"
+  subnetIds:
+   - "subnet-XXXXXXX"
+```
+
+```yaml
+# service catalog product yml
+VpcSecurityGroups:
+  Type: CommaDelimitedList
+  Description: (optional) The list of security group ids of the VPC that needs to be accessed.
+    Default: ""
+VpcSubnetIds:
+  Type: CommaDelimitedList
+  Description: (optional) The list of subnet Ids within the VPC that needs access to.
+  Default: ""  
+```
+- **Layers**: supports a list of existing layers
+
+```yaml
+# serverless.yml
+layers:
+   - arn:aws:lambda:us-east-1:XXXXXXXXXX:layer:node_js_layer:1
+```
+
+```yaml
+# service catalog product yml
+LambdaLayers:
+  Type: CommaDelimitedList
+  Description: "(optional) list of lambda layers for the function"
+  Default: ""
+```

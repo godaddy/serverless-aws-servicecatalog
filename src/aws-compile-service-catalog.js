@@ -221,13 +221,14 @@ class AwsCompileServiceCatalog {
       }
     }
 
-    let layers = null;
-    if (functionObject.layers && Array.isArray(functionObject.layers)) {
-      layers = functionObject.layers.toString();
-    } else if (this.serverless.service.provider.layers
-      && Array.isArray(this.serverless.service.provider.layers)) {
-      layers = this.serverless.service.provider.layers.toString();
+    let { layers } = functionObject;
+    if (!layers || !Array.isArray(layers)) {
+      ({ layers } = this.serverless.service.provider);
+      if (!layers || !Array.isArray(layers)) {
+        layers = null;
+      }
     }
+    layers = layers && layers.toString();
     if (layers) {
       newFunction.Properties.ProvisioningParameters.push({
         Key: 'LambdaLayers',

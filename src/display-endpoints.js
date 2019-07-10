@@ -3,7 +3,7 @@ const BbPromise = require('bluebird');
 
 module.exports = {
   displayEndpoints() {
-    this.serverless.cli.consoleLog(`${chalk.yellow('endpoints:')}`);
+    this.serverless.cli.consoleLog(chalk.yellow('endpoints:'));
     const allFunctions = this.serverless.service.getAllFunctions();
     return BbPromise.each(
       allFunctions,
@@ -31,10 +31,10 @@ module.exports = {
                         method = event.http.method.toUpperCase();
                         path = event.http.path;
                       } else {
-                        method = event.http.split(' ')[0].toUpperCase();
-                        path = event.http.split(' ')[1];
+                        [method, path] = event.http.split(' ');
+                        method = method.toUpperCase();
                       }
-                      this.serverless.cli.consoleLog(`${method} - ${endpoint}/${path}`);
+                      this.serverless.cli.consoleLog(`  ${method} - ${endpoint}/${path}`);
                     }
                   });
                   BbPromise.resolve();

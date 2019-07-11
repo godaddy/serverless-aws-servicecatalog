@@ -3,6 +3,7 @@
 const BbPromise = require('bluebird');
 const path = require('path');
 const fs = require('fs');
+const { displayEndpoints } = require('./display-endpoints');
 
 class AwsCompileServiceCatalog {
   constructor(serverless, options) {
@@ -18,6 +19,8 @@ class AwsCompileServiceCatalog {
       this.hooks = {
         'before:package:finalize': () => BbPromise.bind(this)
           .then(this.compileFunctions),
+        'after:aws:info:displayApiKeys': () => BbPromise.bind(this)
+          .then(displayEndpoints),
       };
       this.serverless.cli.log('AwsCompileServiceCatalog');
       // clear out any other aws plugins
@@ -29,6 +32,9 @@ class AwsCompileServiceCatalog {
       }
       if (this.serverless.pluginManager.hooks['package:setupProviderConfiguration']) {
         this.serverless.pluginManager.hooks['package:setupProviderConfiguration'].length = 0;
+      }
+      if (this.serverless.pluginManager.hooks['aws:info:displayEndpoints']) {
+        this.serverless.pluginManager.hooks['aws:info:displayEndpoints'].length = 0;
       }
     }
   }

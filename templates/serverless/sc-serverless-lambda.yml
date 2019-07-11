@@ -243,8 +243,9 @@ Resources:
       BasePath: !Ref DesiredBasePath
       DomainName: !Ref CustomDomainName
       RestApiId: !Ref ApiGatewayRestApi
-      Stage: gddeploy
+      Stage: !Ref LambdaStage
     DependsOn:
+      - ApiGatewayDeployment
       - CustomDomain
   AppLambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission

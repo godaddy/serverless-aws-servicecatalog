@@ -38,6 +38,18 @@ Parameters:
   Timeout:
     Type: Number
     Default: 6
+  CustomDomainName:
+    Type: String
+    Description: (optional) Custom Domain Name
+    Default: ""
+  CustomDomainAcmCertificateId:
+    Type: String
+    Description: (optional) ID of the ACM Certificate to use for the Custom Domain Name
+    Default: ""
+  DesiredBasePath:
+    Type: String
+    Description: (optional) Base Path for Custom Domains
+    Default: ""
   EnvironmentVariablesJson:
     Type: String
     Default: "{}"
@@ -56,12 +68,15 @@ Parameters:
   VpcSubnetIds:
     Type: CommaDelimitedList
     Description: (optional) The list of subnet Ids within the VPC that needs access to.
-    Default: ""  
+    Default: ""
 Conditions:
   UsingVPC: !And
   - !Not [ !Equals [ !Join [ "", !Ref VpcSubnetIds ], "" ] ]
   - !Not [ !Equals [ !Join [ "", !Ref VpcSecurityGroups ], "" ] ]
   HasLayers:  !Not [ !Equals [ !Join [ "", !Ref LambdaLayers ], "" ] ]
+  UsingCustomDomain: !And
+    - !Not [ !Equals [ !Ref CustomDomainName, "" ] ]
+    - !Not [ !Equals [ !Ref CustomDomainAcmCertificateId, "" ] ]
 Resources:
   AppLogGroup:
     Type: AWS::Logs::LogGroup
@@ -211,6 +226,27 @@ Resources:
     DependsOn:
     - ApiGatewayMethodAny
     - ApiGatewayMethodProxyVarAny
+  CustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Condition: UsingCustomDomain
+    Properties:
+      DomainName: !Ref CustomDomainName
+      EndpointConfiguration:
+        Types:
+          - EDGE
+      RegionalCertificateArn: !Ref "AWS::NoValue"
+      CertificateArn: !Sub "arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CustomDomainAcmCertificateId}"
+  CustomDomainBasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Condition: UsingCustomDomain
+    Properties:
+      BasePath: !Ref DesiredBasePath
+      DomainName: !Ref CustomDomainName
+      RestApiId: !Ref ApiGatewayRestApi
+      Stage: !Ref LambdaStage
+    DependsOn:
+      - ApiGatewayDeployment
+      - CustomDomain
   AppLambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission
     Properties:

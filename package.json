@@ -1,8 +1,8 @@
 {
-  "name": "serverless-aws-service-catalog",
+  "name": "serverless-aws-servicecatalog",
   "version": "1.0.0",
   "description": "",
-  "main": "src/aws-compile-service-catalog.js",
+  "main": "src/aws-compile-servicecatalog.js",
   "scripts": {
     "test": "mocha",
     "test-coverage": "nyc --reporter=lcov mocha",

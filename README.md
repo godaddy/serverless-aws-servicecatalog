@@ -6,23 +6,16 @@ A plugin to allow the provisioning of [AWS Service Catalog](https://console.aws.
 
 ## Install
 
-`npm install --save-dev serverless-aws-service-catalog`
+`npm install --save-dev serverless-aws-servicecatalog`
+
+Alternatively you may package the plugin `npm pack` and install it with npm from the tarball.
 
 Add the plugin to your `serverless.yml` file:
 
 ```yaml
-plugins:
-  localPath: './custom-serverless-plugins'
-  modules:
-    - serverless-aws-service-catalog
+plugins:  
+  - serverless-aws-servicecatalog
 ```
-
-Alternatively you may package the plugin `npm pack` and install it with npm from the tarbell. In this case the plugin is added like a normal plugin
-
-```yaml
-plugins:
-  - serverless-aws-service-catalog
-```  
 
 ## Sample Configuration
 ```yaml
@@ -33,10 +26,11 @@ provider:
   scProductId: prod-hpzfzam5x5vac
   scProductVersion: v1.2
   region: us-east-1
-  stage: dev
-  # scProductTemplate: ./CUSTOM-TEMPLATE # optionally override the default template
+  stage: dev  
   tags:
     product: 'my api'
+  provisioningParameters:
+    EndpointType: REGIONAL
 ```  
 
 

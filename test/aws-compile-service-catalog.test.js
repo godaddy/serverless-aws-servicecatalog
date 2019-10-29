@@ -1,4 +1,4 @@
-'use strict';
+/* eslint no-sync: 0 */
 
 const path = require('path');
 const os = require('os');
@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const chai = require('chai');
 const Serverless = require('serverless');
 const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
-const AwsCompileServiceCatalog = require('../src/aws-compile-service-catalog');
+const AwsCompileServiceCatalog = require('../src/aws-compile-servicecatalog');
 
 chai.use(require('chai-as-promised'));
 
@@ -23,13 +23,14 @@ describe('AwsCompileFunctions', () => {
   const productNameBye = 'TestByeLambdaFunctionSCProvisionedProduct';
   const testEnvironment = {
     DEV: 'dev',
-    TEST: 'test',
+    TEST: 'test'
   };
   const testVpc = {
     securityGroupIds: ['group1', 'group2'],
-    subnetIds: ['subnet1', 'subnet2'],
+    subnetIds: ['subnet1', 'subnet2']
   };
 
+  // eslint-disable-next-line max-statements
   const setup = (providerProps) => {
     const options = { stage: 'dev', region: 'us-east-1' };
     const serviceArtifact = 'new-service.zip';
@@ -38,7 +39,7 @@ describe('AwsCompileFunctions', () => {
     testProvider = {
       deploymentBucket: 'test-bucket',
       scProdcutVersion: 'v1.0',
-      scProductId: 'prod-testid',
+      scProductId: 'prod-testid'
     };
     if (providerProps) {
       testProvider = { ...testProvider, ...providerProps };
@@ -50,7 +51,7 @@ describe('AwsCompileFunctions', () => {
     awsCompileServiceCatalog = new AwsCompileServiceCatalog(serverless, options);
     awsCompileServiceCatalog.serverless.service.provider.compiledCloudFormationTemplate = {
       Resources: {},
-      Outputs: {},
+      Outputs: {}
     };
     awsCompileServiceCatalog.packagePath = getTmpDirPath();
     // The contents of the test artifacts need to be predictable so the hashes stay the same
@@ -67,19 +68,19 @@ describe('AwsCompileFunctions', () => {
       name: 'test-hello',
       package: {
         artifact: path.join(awsCompileServiceCatalog.packagePath,
-          individualArtifact),
+          individualArtifact)
       },
       handler: 'handler.hello',
       environment: testEnvironment,
-      vpc: testVpc,
+      vpc: testVpc
     };
     awsCompileServiceCatalog.serverless.service.functions[functionNameBye] = {
       name: 'test-bye',
       package: {
         artifact: path.join(awsCompileServiceCatalog.packagePath,
-          individualArtifact),
+          individualArtifact)
       },
-      handler: 'handler.bye',
+      handler: 'handler.bye'
     };
   };
   describe('#constructor()', () => {
@@ -113,8 +114,8 @@ describe('AwsCompileFunctions', () => {
     it('should reject invalid environment keys', () => {
       setup();
       awsCompileServiceCatalog.serverless.service.functions[functionNameHello].environment = {
-        OK: 'value1',
-        'FOO$@~': 'value2',
+        'OK': 'value1',
+        'FOO$@~': 'value2'
       };
       expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Invalid characters in environment variable FOO$@~');
     });
@@ -136,17 +137,17 @@ describe('AwsCompileFunctions', () => {
         OK: 'value1',
         OK_CFRef: ['Ref'],
         OK_FN: ['Fn::GetAtt'],
-        NOT_OK: ['foo'],
+        NOT_OK: ['foo']
       };
       expect(awsCompileServiceCatalog.compileFunctions()).to.be.rejectedWith('Environment variable NOT_OK must contain string');
     });
     it('should override the template when the template', () => {
       const providerProps = {
-        scProductTemplate: path.join(__dirname, './testTemplate.json'),
+        scProductTemplate: path.join(__dirname, './testTemplate.json')
       };
       const customParam = {
         Key: 'CustomParam',
-        Value: 'CustomValue',
+        Value: 'CustomValue'
       };
       setup(providerProps);
       return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled

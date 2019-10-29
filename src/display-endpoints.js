@@ -1,3 +1,7 @@
+/* eslint max-nested-callbacks: 0 */
+
+/** @type{import('chalk').Chalk} */
+// @ts-ignore
 const chalk = require('chalk');
 const BbPromise = require('bluebird');
 
@@ -40,7 +44,7 @@ module.exports = {
                   BbPromise.resolve();
                 });
             }));
-      },
+      }
     );
-  },
+  }
 };

@@ -1,15 +1,7 @@
 module.exports = {
-  "extends": "airbnb",
+  "extends": "godaddy",
   "plugins": [],
-  "rules": {
-    "func-names": "off",
-
-    // doesn't work in node v4 :(
-    "strict": "off",
-    "prefer-rest-params": "off",
-    "react/require-extension" : "off",
-    "import/no-extraneous-dependencies" : "off"
-  },
+  "rules": {},
   "env": {
        "mocha": true,
        "jest": true

@@ -1,4 +1,4 @@
-'use strict';
+/* eslint no-process-exit: 0 */
 
 const BbPromise = require('bluebird');
 const path = require('path');
@@ -20,22 +20,26 @@ class AwsCompileServiceCatalog {
         'before:package:finalize': () => BbPromise.bind(this)
           .then(this.compileFunctions),
         'after:aws:info:displayApiKeys': () => BbPromise.bind(this)
-          .then(displayEndpoints),
+          .then(displayEndpoints)
       };
       this.serverless.cli.log('AwsCompileServiceCatalog');
-      // clear out any other aws plugins
-      if (this.serverless.pluginManager.hooks['package:compileEvents']) {
-        this.serverless.pluginManager.hooks['package:compileEvents'].length = 0;
-      }
-      if (this.serverless.pluginManager.hooks['package:compileFunctions']) {
-        this.serverless.pluginManager.hooks['package:compileFunctions'].length = 0;
-      }
-      if (this.serverless.pluginManager.hooks['package:setupProviderConfiguration']) {
-        this.serverless.pluginManager.hooks['package:setupProviderConfiguration'].length = 0;
-      }
-      if (this.serverless.pluginManager.hooks['aws:info:displayEndpoints']) {
-        this.serverless.pluginManager.hooks['aws:info:displayEndpoints'].length = 0;
-      }
+      this.clearOtherPlugins();
+    }
+  }
+
+  clearOtherPlugins() {
+    // clear out any other aws plugins
+    if (this.serverless.pluginManager.hooks['package:compileEvents']) {
+      this.serverless.pluginManager.hooks['package:compileEvents'].length = 0;
+    }
+    if (this.serverless.pluginManager.hooks['package:compileFunctions']) {
+      this.serverless.pluginManager.hooks['package:compileFunctions'].length = 0;
+    }
+    if (this.serverless.pluginManager.hooks['package:setupProviderConfiguration']) {
+      this.serverless.pluginManager.hooks['package:setupProviderConfiguration'].length = 0;
+    }
+    if (this.serverless.pluginManager.hooks['aws:info:displayEndpoints']) {
+      this.serverless.pluginManager.hooks['aws:info:displayEndpoints'].length = 0;
     }
   }
 
@@ -48,6 +52,7 @@ class AwsCompileServiceCatalog {
     let templateJson;
     let parsedTemplate;
     try {
+      // eslint-disable-next-line no-sync
       templateJson = fs.readFileSync(templateFile, 'utf8');
     } catch (ex) {
       this.serverless.cli.log('error reading template file:: ', templateFile);
@@ -66,10 +71,11 @@ class AwsCompileServiceCatalog {
     const allFunctions = this.serverless.service.getAllFunctions();
     return BbPromise.each(
       allFunctions,
-      functionName => this.compileFunction(functionName),
+      functionName => this.compileFunction(functionName)
     );
   }
 
+  // eslint-disable-next-line complexity, max-statements
   compileFunction(functionName) {
     const newFunction = this.getCfTemplate();
     const setProvisioningParamValue = (key, value) => {
@@ -150,7 +156,7 @@ class AwsCompileServiceCatalog {
       const tags = Object.assign(
         {},
         this.serverless.service.provider.tags,
-        functionObject.tags,
+        functionObject.tags
       );
       newFunction.Properties.Tags = Object.keys(tags).map(key => (
         { Key: key, Value: tags[key] }));
@@ -160,7 +166,7 @@ class AwsCompileServiceCatalog {
       const environment = Object.assign(
         {},
         this.serverless.service.provider.environment || {},
-        functionObject.environment || {},
+        functionObject.environment || {}
       );
       const envKeys = Object.keys(environment);
       envKeys.forEach((key) => {
@@ -179,7 +185,7 @@ class AwsCompileServiceCatalog {
       });
       newFunction.Properties.ProvisioningParameters.push({
         Key: 'EnvironmentVariablesJson',
-        Value: JSON.stringify(environment),
+        Value: JSON.stringify(environment)
       });
     }
     if (functionObject.provisioningParameters
@@ -187,7 +193,7 @@ class AwsCompileServiceCatalog {
       const provisioningParameters = Object.assign(
         {},
         this.serverless.service.provider.provisioningParameters,
-        functionObject.provisioningParameters,
+        functionObject.provisioningParameters
       );
       let errorMessage = null;
       if (Object.entries(provisioningParameters).some(([key, value]) => {
@@ -199,7 +205,7 @@ class AwsCompileServiceCatalog {
 
         newFunction.Properties.ProvisioningParameters.push({
           Key: key,
-          Value: value,
+          Value: value
         });
         return false;
       })) {
@@ -218,11 +224,11 @@ class AwsCompileServiceCatalog {
       if (vpcSecurityGroups && vpcSubnetIds) {
         newFunction.Properties.ProvisioningParameters.push({
           Key: 'VpcSecurityGroups',
-          Value: vpcSecurityGroups.toString(),
+          Value: vpcSecurityGroups.toString()
         });
         newFunction.Properties.ProvisioningParameters.push({
           Key: 'VpcSubnetIds',
-          Value: vpcSubnetIds.toString(),
+          Value: vpcSubnetIds.toString()
         });
       }
     }
@@ -238,7 +244,7 @@ class AwsCompileServiceCatalog {
     if (layers) {
       newFunction.Properties.ProvisioningParameters.push({
         Key: 'LambdaLayers',
-        Value: layers,
+        Value: layers
       });
     }
 
@@ -248,7 +254,7 @@ class AwsCompileServiceCatalog {
     this.serverless.service.provider
       .compiledCloudFormationTemplate.Outputs.ProvisionedProductID = {
         Description: 'Provisioned product ID',
-        Value: { Ref: functionLogicalId },
+        Value: { Ref: functionLogicalId }
       };
     return BbPromise.resolve();
   }

@@ -183,5 +183,40 @@ describe('AwsCompileFunctions', () => {
           expect(securityParam.Value).to.equal('arn:aws:xxx:*:*');
         });
     });
+
+    it('should use scProductId when present', () => {
+      setup({
+        scProductName: 'foo'
+      });
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          expect(functionResource.Properties.ProductId).to.equal('prod-testid');
+          expect(functionResource.Properties.ProductName).to.not.exist;
+        });
+    });
+
+    it('should use scProductName when present and no scProductId is specified', () => {
+      setup({
+        scProductId: void 0,
+        scProductName: 'foo'
+      });
+      return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+        .then(() => {
+          const functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameHello];
+          expect(functionResource.Properties.ProductId).to.not.exist;
+          expect(functionResource.Properties.ProductName).to.equal('foo');
+        });
+    });
+
+    it('should reject when neither scProductId nor scProductName are specified', () => {
+      setup({
+        scProductId: void 0
+      });
+      return expect(awsCompileServiceCatalog.compileFunctions())
+        .to.be.rejectedWith('Missing scProductId or scProductName on service.');
+    });
   });
 });

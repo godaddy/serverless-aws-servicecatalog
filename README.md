@@ -106,7 +106,7 @@ provider:
   runtime: python2.7
   stage: dev
   deploymentBucket: [deploymentbucket]
-  scProductId: [serverlessProductId]
+  scProductId: [serverlessProductId] # Or use scProductName instead if you want to target your template's name
   scProductVersion: [serverlessProvisioningArtifactNames]
   region: us-east-1
   tags:

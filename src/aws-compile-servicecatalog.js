@@ -14,8 +14,9 @@ class AwsCompileServiceCatalog {
       || path.join(servicePath || '.', '.serverless');
     this.provider = this.serverless.getProvider('aws');
 
-    // key off the ServiceCatalog Product ID
-    if ('scProductId' in this.serverless.service.provider) {
+    // key off the ServiceCatalog Product ID or name
+    if ('scProductId' in this.serverless.service.provider ||
+      'scProductName' in this.serverless.service.provider) {
       this.hooks = {
         'before:package:finalize': () => BbPromise.bind(this)
           .then(this.compileFunctions),
@@ -144,7 +145,19 @@ class AwsCompileServiceCatalog {
     setProvisioningParamValue('LambdaStage', this.provider.getStage());
     const serviceProvider = this.serverless.service.provider;
     newFunction.Properties.ProvisioningArtifactName = serviceProvider.scProductVersion;
-    newFunction.Properties.ProductId = serviceProvider.scProductId;
+
+    if (serviceProvider.scProductId) {
+      newFunction.Properties.ProductId = serviceProvider.scProductId;
+    } else if (serviceProvider.scProductName) {
+      delete newFunction.Properties.ProductId;
+      newFunction.Properties.ProductName = serviceProvider.scProductName;
+    } else {
+      const errorMessage = 'Missing scProductId or scProductName on service.'
+        + ' Please make sure to define one of "scProductId" or "scProductName".'
+        + ' See documentation for more info.';
+      return BbPromise.reject(new this.serverless.classes.Error(errorMessage));
+    }
+
     newFunction.Properties.ProvisionedProductName = `provisionSC-${functionObject.name}`;
 
     // publish these properties to the platform

@@ -1,9 +1,10 @@
-/* eslint no-sync: 0 */
+/* eslint no-sync: 0, max-nested-callbacks: 0 */
 
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const chai = require('chai');
+const sinon = require('sinon');
 const Serverless = require('serverless');
 const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
 const AwsCompileServiceCatalog = require('../src/aws-compile-servicecatalog');
@@ -83,6 +84,14 @@ describe('AwsCompileFunctions', () => {
       handler: 'handler.bye'
     };
   };
+
+  afterEach(function () {
+    sinon.restore();
+    serverless = null;
+    testProvider = null;
+    awsCompileServiceCatalog = null;
+  });
+
   describe('#constructor()', () => {
     it('should set the provider variable to an instance of AwsProvider', () => {
       setup();
@@ -217,6 +226,69 @@ describe('AwsCompileFunctions', () => {
       });
       return expect(awsCompileServiceCatalog.compileFunctions())
         .to.be.rejectedWith('Missing scProductId or scProductName on service.');
+    });
+
+    describe('#scParameterMapping', function () {
+      it('can provide alternate SC Paramter Names', function () {
+        const customMapping = {
+          s3Bucket: 'CustomS3Bucket',
+          s3Key: 'CustomS3Key',
+          handler: 'CustomHandler',
+          name: 'CustomLambdaName',
+          memorySize: 'CustomMemorySize',
+          timeout: 'CustomTimeout',
+          runtime: 'CustomRuntime',
+          stage: 'CustomLambdaStage',
+          environmentVariablesJson: 'CustomEnvironmentVariablesJson',
+          vpcSecurityGroups: 'CustomVpcSecurityGroups',
+          vpcSubnetIds: 'CustomVpcSubnetIds',
+          lambdaLayers: 'CustomLambdaLayers'
+        };
+
+        setup({
+          scProductTemplate: path.join(__dirname, './customTestTemplate.json'),
+          scParameterMapping: customMapping
+        });
+        awsCompileServiceCatalog.serverless.service.functions[functionNameHello]
+          .layers = ['arn:aws:xxx:*:*'];
+
+        return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+          .then(() => {
+            const parameters = awsCompileServiceCatalog.serverless.service.provider
+              .compiledCloudFormationTemplate.Resources[productNameHello].Properties.ProvisioningParameters;
+            Object.values(customMapping).forEach(overriddenKey => {
+              const value = parameters.find(k => k.Key === overriddenKey);
+              expect(value, `Mapping for ${ overriddenKey } doesn't exist in ${ JSON.stringify(parameters, null, 2) }`).to.exist;
+            });
+          });
+
+      });
+
+      it('can drop some SC Paramter Names', function () {
+        const customMapping = {
+          stage: ''
+        };
+
+        setup({
+          scProductTemplate: path.join(__dirname, './customTestTemplate-NoStage.json'),
+          scParameterMapping: customMapping
+        });
+
+        const logSpy = sinon.spy(serverless.cli, 'log');
+
+        return expect(awsCompileServiceCatalog.compileFunctions()).to.be.fulfilled
+          .then(() => {
+            const parameters = awsCompileServiceCatalog.serverless.service.provider
+              .compiledCloudFormationTemplate.Resources[productNameHello].Properties.ProvisioningParameters;
+
+            // Make sure we didn't log any errors
+            expect(logSpy.callCount).to.equal(0);
+
+            // Make sure we don't have the stage
+            const hasStage = parameters.find(k => k.Key && /[sS]tage/.test(k.Key));
+            expect(hasStage).to.not.be.ok;
+          });
+      });
     });
   });
 });

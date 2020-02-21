@@ -163,3 +163,33 @@ LambdaLayers:
   Description: "(optional) list of lambda layers for the function"
   Default: ""
 ```
+
+## Using Custom Service Catalog Parameter Names
+
+If you already have a service catalog product for Lambdas that has a different naming schema, you can still use that product. You can provide a renaming mapping in your `serverless.yml` file like so:
+
+```yaml
+provider:
+  scParameterMapping:
+    stage: SomeCustomStageName
+    name: MyLambdaParameterName
+```
+
+You can specify any of the following properties to be renamed (shown here with their default values):
+
+```yaml
+provider:
+  scParameterMapping:
+    s3Bucket: S3Bucket
+    s3Key: S3Key
+    handler: Handler
+    name: LambdaName
+    memorySize: MemorySize
+    timeout: Timeout
+    runtime: Runtime
+    stage: LambdaStage
+    environmentVariablesJson: EnvironmentVariablesJson
+    vpcSecurityGroups: VpcSecurityGroups
+    vpcSubnetIds: VpcSubnetIds
+    lambdaLayers: LambdaLayers
+```

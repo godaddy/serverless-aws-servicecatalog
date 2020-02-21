@@ -5,6 +5,21 @@ const path = require('path');
 const fs = require('fs');
 const { displayEndpoints } = require('./display-endpoints');
 
+const scParameterMappingDefaults = {
+  s3Bucket: 'S3Bucket',
+  s3Key: 'S3Key',
+  handler: 'Handler',
+  name: 'LambdaName',
+  memorySize: 'MemorySize',
+  timeout: 'Timeout',
+  runtime: 'Runtime',
+  stage: 'LambdaStage',
+  environmentVariablesJson: 'EnvironmentVariablesJson',
+  vpcSecurityGroups: 'VpcSecurityGroups',
+  vpcSubnetIds: 'VpcSubnetIds',
+  lambdaLayers: 'LambdaLayers'
+};
+
 class AwsCompileServiceCatalog {
   constructor(serverless, options) {
     this.serverless = serverless;
@@ -26,6 +41,14 @@ class AwsCompileServiceCatalog {
       this.serverless.cli.log('AwsCompileServiceCatalog');
       this.clearOtherPlugins();
     }
+
+    const mappingOverrides = this.serverless.service.provider &&
+      this.serverless.service.provider.scParameterMapping || {};
+    this.parameterMapping = Object.assign(
+      {},
+      scParameterMappingDefaults,
+      mappingOverrides
+    );
   }
 
   clearOtherPlugins() {
@@ -76,10 +99,18 @@ class AwsCompileServiceCatalog {
     );
   }
 
+  getParameterName(name) {
+    return this.parameterMapping[name];
+  }
+
   // eslint-disable-next-line complexity, max-statements
   compileFunction(functionName) {
     const newFunction = this.getCfTemplate();
     const setProvisioningParamValue = (key, value) => {
+      if (!key) {
+        return;
+      }
+
       const index = newFunction.Properties.ProvisioningParameters
         .findIndex(kv => kv.Key === key);
       if (index === -1) {
@@ -107,7 +138,7 @@ class AwsCompileServiceCatalog {
         '.serverless', artifactFileName);
     }
     if (this.serverless.service.provider.deploymentBucket) {
-      setProvisioningParamValue('S3Bucket', this.serverless.service.provider.deploymentBucket);
+      setProvisioningParamValue(this.getParameterName('s3Bucket'), this.serverless.service.provider.deploymentBucket);
     } else {
       const errorMessage = 'Missing provider.deploymentBucket parameter.'
         + ' Please make sure you provide a deployment bucket parameter. SC Provisioned Product cannot create an S3 Bucket.'
@@ -117,7 +148,7 @@ class AwsCompileServiceCatalog {
 
     const s3Folder = this.serverless.service.package.artifactDirectoryName;
     const s3FileName = artifactFilePath.split(path.sep).pop();
-    setProvisioningParamValue('S3Key', `${s3Folder}/${s3FileName}`);
+    setProvisioningParamValue(this.getParameterName('s3Key'), `${s3Folder}/${s3FileName}`);
 
     if (!functionObject.handler) {
       const errorMessage = `Missing "handler" property in function "${functionName}".`
@@ -137,12 +168,12 @@ class AwsCompileServiceCatalog {
       || this.serverless.service.provider.runtime
       || 'nodejs4.3';
 
-    setProvisioningParamValue('Handler', functionObject.handler);
-    setProvisioningParamValue('LambdaName', functionObject.name);
-    setProvisioningParamValue('MemorySize', MemorySize);
-    setProvisioningParamValue('Timeout', Timeout);
-    setProvisioningParamValue('Runtime', Runtime);
-    setProvisioningParamValue('LambdaStage', this.provider.getStage());
+    setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+    setProvisioningParamValue(this.getParameterName('name'), functionObject.name);
+    setProvisioningParamValue(this.getParameterName('memorySize'), MemorySize);
+    setProvisioningParamValue(this.getParameterName('timeout'), Timeout);
+    setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
+    setProvisioningParamValue(this.getParameterName('stage'), this.provider.getStage());
     const serviceProvider = this.serverless.service.provider;
     newFunction.Properties.ProvisioningArtifactName = serviceProvider.scProductVersion;
 
@@ -197,7 +228,7 @@ class AwsCompileServiceCatalog {
         return true;
       });
       newFunction.Properties.ProvisioningParameters.push({
-        Key: 'EnvironmentVariablesJson',
+        Key: this.getParameterName('environmentVariablesJson'),
         Value: JSON.stringify(environment)
       });
     }
@@ -236,11 +267,11 @@ class AwsCompileServiceCatalog {
 
       if (vpcSecurityGroups && vpcSubnetIds) {
         newFunction.Properties.ProvisioningParameters.push({
-          Key: 'VpcSecurityGroups',
+          Key: this.getParameterName('vpcSecurityGroups'),
           Value: vpcSecurityGroups.toString()
         });
         newFunction.Properties.ProvisioningParameters.push({
-          Key: 'VpcSubnetIds',
+          Key: this.getParameterName('vpcSubnetIds'),
           Value: vpcSubnetIds.toString()
         });
       }
@@ -256,10 +287,14 @@ class AwsCompileServiceCatalog {
     layers = layers && layers.toString();
     if (layers) {
       newFunction.Properties.ProvisioningParameters.push({
-        Key: 'LambdaLayers',
+        Key: this.getParameterName('lambdaLayers'),
         Value: layers
       });
     }
+
+    // Only leave the provisioning parameters that exist and have a key
+    newFunction.Properties.ProvisioningParameters = newFunction.Properties.ProvisioningParameters
+      .filter(item => item && item.Key);
 
     const functionLogicalId = `${this.provider.naming.getLambdaLogicalId(functionName)}SCProvisionedProduct`;
     this.serverless.service.provider.compiledCloudFormationTemplate

@@ -1,0 +1,49 @@
+{
+  "Type": "AWS::ServiceCatalog::CloudFormationProvisionedProduct",
+
+  "Properties": {
+    "ProvisioningParameters": [
+      {
+        "Key": "CustomS3Bucket",
+        "Value": "ServerlessDeploymentBucket"
+      },
+      {
+        "Key": "CustomS3Key",
+        "Value": "S3Key"
+      },
+      {
+        "Key": "CustomLambdaName",
+        "Value": "LambdaName"
+      },
+      {
+        "Key": "CustomLambdaStage",
+        "Value": "test"
+      },
+      {
+        "Key": "CustomHandler",
+        "Value": "Handler"
+      },
+      {
+        "Key": "CustomRuntime",
+        "Value": "Runtime"
+      },
+      {
+        "Key": "CustomMemorySize",
+        "Value": "MemorySize"
+      },
+      {
+        "Key": "CustomTimeout",
+        "Value": "Timeout"
+      },
+      { 
+        "Key": "CustomCustomParam",
+        "Value": "CustomValue"
+      }
+    ],
+    "ProvisioningArtifactName": "ProvisioningArtifactName",
+    "ProductId": "ProductId",
+    "ProvisionedProductName": {
+      "Fn::Sub": "provisionServerless-${LambdaName}"
+    }
+  }
+}

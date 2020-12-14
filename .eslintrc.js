@@ -1,9 +1,9 @@
 module.exports = {
-  "extends": "godaddy",
-  "plugins": [],
-  "rules": {},
-  "env": {
-       "mocha": true,
-       "jest": true
-   }
+  extends: 'godaddy',
+  plugins: [],
+  rules: {},
+  env: {
+    mocha: true,
+    jest: true
+  }
 };

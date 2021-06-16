@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const chai = require('chai');
 const sinon = require('sinon');
 const Serverless = require('serverless');
-const AwsProvider = require('serverless/lib/plugins/aws/provider/awsProvider');
+const AwsProvider = require('serverless/lib/plugins/aws/provider');
 const AwsCompileServiceCatalog = require('../src/aws-compile-servicecatalog');
 
 chai.use(require('chai-as-promised'));

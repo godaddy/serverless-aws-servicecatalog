@@ -5,7 +5,7 @@ A plugin to allow the provisioning of [AWS Service Catalog](https://console.aws.
 
 **Serverless Framework versions**
 
-This plugin is now targeted at serverless v2, if you are using serverless@1 use `v1.2.1`.
+This plugin is now targeted at serverless@2, if you are using serverless@1 use `v1.2.1`.
 
 ## Install
 

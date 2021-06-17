@@ -3,6 +3,9 @@
 
 A plugin to allow the provisioning of [AWS Service Catalog](https://console.aws.amazon.com/servicecatalog) products with [serverless](http://www.serverless.com)
 
+**Serverless Framework versions**
+
+This plugin is now targeted at serverless@2, if you are using serverless@1 use `v1.2.1`.
 
 ## Install
 
@@ -13,7 +16,7 @@ Alternatively you may package the plugin `npm pack` and install it with npm from
 Add the plugin to your `serverless.yml` file:
 
 ```yaml
-plugins:  
+plugins:
   - serverless-aws-servicecatalog
 ```
 
@@ -26,27 +29,27 @@ provider:
   scProductId: prod-hpzfzam5x5vac
   scProductVersion: v1.2
   region: us-east-1
-  stage: dev  
+  stage: dev
   tags:
     product: 'my api'
   provisioningParameters:
     EndpointType: REGIONAL
-```  
+```
 
 
 ## Example
-There are 2 ways to setup the example, using the launch-stack button or manually from your own S3 bucket.  Both methods result in a 
+There are 2 ways to setup the example, using the launch-stack button or manually from your own S3 bucket.  Both methods result in a
 AWS CloudFormation stack with outputs that will be used as parameters in the `serverless.yml` config.
 
 
 ### Express Setup using launch-stack
-1. Click the button below to setup your account.  
-    [![CreateStack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/#/stacks/new?stackName=Serverless-SC-Portfolio-Stack&templateURL=https://s3.amazonaws.com/aws-service-catalog-reference-architectures/serverless/sc-portfolio-serverless.yml)  
+1. Click the button below to setup your account.
+    [![CreateStack](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/#/stacks/new?stackName=Serverless-SC-Portfolio-Stack&templateURL=https://s3.amazonaws.com/aws-service-catalog-reference-architectures/serverless/sc-portfolio-serverless.yml)
     https://s3.amazonaws.com/aws-service-catalog-reference-architectures/serverless/sc-portfolio-serverless.yml
 
-2. Allow end users to deploy:  
-    
-    - If you are using IAM users for deployment then go to the __ServiceCatalogEndUsers__ parameter, enter a comma delimited list of users to add to the generated group.  
+2. Allow end users to deploy:
+
+    - If you are using IAM users for deployment then go to the __ServiceCatalogEndUsers__ parameter, enter a comma delimited list of users to add to the generated group.
 
     - If you are using role based authentication then supply up to 2 role names in the __LinkedRole1__ and __LinkedRole2__ parameters.
 
@@ -60,21 +63,21 @@ AWS CloudFormation stack with outputs that will be used as parameters in the `se
 1. Copy the files from the templates directory to your S3 bucket
 
 ```shell
-aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s3://$S3BUCKET  --exclude "*" --include "*.yml" --recursive 
+aws s3 cp ./custom-serverless-plugins/serverless-aws-service-catalog/templates s3://$S3BUCKET  --exclude "*" --include "*.yml" --recursive
 ```
 
-2. Create the Cloudformation stack from the portfolio template.  To allow end users to deploy you will need to edit the params of the CloudFormation template:  
-    
-    - If you are using IAM users for deployment then go to the ServiceCatalogEndUsers parameter, enter a comma delimited list of users to add to the generated group.  
+2. Create the Cloudformation stack from the portfolio template.  To allow end users to deploy you will need to edit the params of the CloudFormation template:
+
+    - If you are using IAM users for deployment then go to the ServiceCatalogEndUsers parameter, enter a comma delimited list of users to add to the generated group.
     For this example an IAM user is supplied using the `SERVERLESS_USER` variable
 
     - If you are using role based authentication then supply up to 2 role names in the LinkedRole1 and LinkedRole2 parameters.
- 
+
 ```shell
 export S3BUCKET=yourBucketName
 export SERVERLESS_USER=yourAwsServerlessUser
 aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --template-url "https://s3.amazonaws.com/$S3BUCKET/serverless/sc-portfolio-serverless.yml" --parameters ParameterKey=PorfolioName,ParameterValue=ServerlessPortfolio ParameterKey=RepoRootURL,ParameterValue="https://s3.amazonaws.com/$S3BUCKET/" ParameterKey=ServiceCatalogEndUsers,ParameterValue=$SERVERLESS_USER  --capabilities CAPABILITY_NAMED_IAM
-```    
+```
 (note: trailing / is required on the RepoRootUrl param)
 
 
@@ -83,16 +86,16 @@ aws cloudformation create-stack --stack-name Serverless-SC-Portfolio-Stack --tem
 Regardless of how you deployed the CloudFormation above, you now need to copy the output values from CloudFormation to your `serverless.yml` file.
 This is only covering the AWS provider section and assumes you have a complete config for serverless.  See the [Serverless Framework examples](https://github.com/serverless/examples) for more details.
 
-1. get the output params  
+1. get the output params
     a. using the cli
-    ```shell 
+    ```shell
     aws cloudformation  describe-stacks --stack-name Serverless-SC-Portfolio-Stack
-    ```  
+    ```
 
     b. or in the [AWS CloudFormation Console](https://console.aws.amazon.com/cloudformation)
     - in CloudFormation, open the Serverless-SC-Portfolio-Stack stack
     - expand Outputs
-    
+
 2. under provider, enter the settings
     - copy ServerlessDeploymentBucket to deploymentBucket
     - copy serverlessProductId to scProductId
@@ -113,8 +116,8 @@ provider:
     product: 'my api'
  ```
 
-### Deploy 
-If you have modified the configuration and have your AWS credentials setup according to 
+### Deploy
+If you have modified the configuration and have your AWS credentials setup according to
 [serverless instrcutions](https://serverless.com/framework/docs/providers/aws/guide/credentials/), you can now deploy as you normally would.
 
 ```shell
@@ -146,7 +149,7 @@ VpcSecurityGroups:
 VpcSubnetIds:
   Type: CommaDelimitedList
   Description: (optional) The list of subnet Ids within the VPC that needs access to.
-  Default: ""  
+  Default: ""
 ```
 - **Layers**: supports a list of existing layers
 

@@ -30,7 +30,7 @@ class AwsCompileServiceCatalog {
     this.provider = this.serverless.getProvider('aws');
 
     // Add custom schema properties to the AWS provider. For reference use https://github.com/ajv-validator/ajv
-    serverless.configSchemaHandler.defineProvider('aws', {
+    serverless.configSchemaHandler && serverless.configSchemaHandler.defineProvider('aws', {
       provider: {
         properties: {
           scProductId: { type: 'string' },

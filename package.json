@@ -29,20 +29,18 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.1001.0",
-    "bluebird": "^3.7.2",
     "chalk": "^4.1.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^7.15.0",
+    "eslint": "^8.0.0",
     "eslint-config-godaddy": "^5.0.0",
     "eslint-plugin-json": "^3.1.0",
     "eslint-plugin-mocha": "^9.0.0",
     "mocha": "^9.1.2",
     "nyc": "^15.1.0",
-    "serverless": "^2.61.0",
+    "serverless": "^2.62.0",
     "sinon": "^11.1.2"
   }
 }

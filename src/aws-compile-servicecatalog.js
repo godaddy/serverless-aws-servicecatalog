@@ -1,6 +1,5 @@
 /* eslint no-process-exit: 0 */
 
-const BbPromise = require('bluebird');
 const path = require('path');
 const fs = require('fs');
 const { displayEndpoints } = require('./display-endpoints');
@@ -20,7 +19,18 @@ const scParameterMappingDefaults = {
   lambdaLayers: 'LambdaLayers'
 };
 
+/**
+ * @typedef {import('serverless')} Serverless
+ * @typedef {import('serverless').Options} ServerlessOptions
+ */
+
 class AwsCompileServiceCatalog {
+  /**
+   * Construct an instance of the serverless-aws-servicecatalog plugin
+   *
+   * @param {Serverless} serverless Serverless instance
+   * @param {ServerlessOptions} options Options
+   */
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -30,26 +40,32 @@ class AwsCompileServiceCatalog {
     this.provider = this.serverless.getProvider('aws');
 
     // Add custom schema properties to the AWS provider. For reference use https://github.com/ajv-validator/ajv
-    serverless.configSchemaHandler && serverless.configSchemaHandler.defineProvider('aws', {
-      provider: {
-        properties: {
-          scProductId: { type: 'string' },
-          scProductName: { type: 'string' },
-          scProductVersion: { type: 'string' },
-          scProductTemplate: { type: 'string' },
-          scParameterMapping: { type: 'object' }
+    if (serverless.configSchemaHandler) {
+      serverless.configSchemaHandler.defineProvider('aws', {
+        provider: {
+          properties: {
+            scProductId: { type: 'string' },
+            scProductName: { type: 'string' },
+            scProductVersion: { type: 'string' },
+            scProductTemplate: { type: 'string' },
+            scParameterMapping: { type: 'object' },
+            provisioningParameters: { type: 'object' }
+          }
         }
-      }
-    });
+      });
+      serverless.configSchemaHandler.defineFunctionProperties('aws', {
+        properties: {
+          provisioningParameters: { type: 'object' }
+        }
+      });
+    }
 
     // key off the ServiceCatalog Product ID or name
     if ('scProductId' in this.serverless.service.provider ||
       'scProductName' in this.serverless.service.provider) {
       this.hooks = {
-        'before:package:finalize': () => BbPromise.bind(this)
-          .then(this.compileFunctions),
-        'after:aws:info:displayApiKeys': () => BbPromise.bind(this)
-          .then(displayEndpoints)
+        'before:package:finalize': this.compileFunctions.bind(this),
+        'after:aws:info:displayApiKeys': displayEndpoints.bind(this)
       };
       this.serverless.cli.log('AwsCompileServiceCatalog');
       this.clearOtherPlugins();
@@ -104,12 +120,13 @@ class AwsCompileServiceCatalog {
     return parsedTemplate;
   }
 
-  compileFunctions() {
+  async compileFunctions() {
     const allFunctions = this.serverless.service.getAllFunctions();
-    return BbPromise.each(
-      allFunctions,
-      functionName => this.compileFunction(functionName)
-    );
+    for (const functionName of allFunctions) {
+      await this.compileFunction(functionName);
+    }
+
+    return allFunctions;
   }
 
   getParameterName(name) {
@@ -117,7 +134,7 @@ class AwsCompileServiceCatalog {
   }
 
   // eslint-disable-next-line complexity, max-statements
-  compileFunction(functionName) {
+  async compileFunction(functionName) {
     const newFunction = this.getCfTemplate();
     const setProvisioningParamValue = (key, value) => {
       if (!key) {
@@ -133,6 +150,9 @@ class AwsCompileServiceCatalog {
       newFunction.Properties.ProvisioningParameters[index].Value = value;
     };
     const functionObject = this.serverless.service.getFunction(functionName);
+    if ('image' in functionObject) {
+      throw new this.serverless.classes.Error('serverless-aws-servicecatalog does not support Docker image functions');
+    }
     functionObject.package = functionObject.package || {};
 
     const serviceArtifactFileName = this.provider.naming.getServiceArtifactName();
@@ -141,7 +161,7 @@ class AwsCompileServiceCatalog {
     let artifactFilePath = functionObject.package.artifact
       || this.serverless.service.package.artifact;
     if (!artifactFilePath
-      || (this.serverless.service.artifact && !functionObject.package.artifact)) {
+      || (this.serverless.service.package.artifact && !functionObject.package.artifact)) {
       let artifactFileName = serviceArtifactFileName;
       if (this.serverless.service.package.individually || functionObject.package.individually) {
         artifactFileName = functionArtifactFileName;
@@ -156,7 +176,7 @@ class AwsCompileServiceCatalog {
       const errorMessage = 'Missing provider.deploymentBucket parameter.'
         + ' Please make sure you provide a deployment bucket parameter. SC Provisioned Product cannot create an S3 Bucket.'
         + ' Please check the docs for more info';
-      return BbPromise.reject(new this.serverless.classes.Error(errorMessage));
+      throw new this.serverless.classes.Error(errorMessage);
     }
 
     const s3Folder = this.serverless.service.package.artifactDirectoryName;
@@ -168,7 +188,7 @@ class AwsCompileServiceCatalog {
         + ' Please make sure you point to the correct lambda handler.'
         + ' For example: handler.hello.'
         + ' Please check the docs for more info';
-      return BbPromise.reject(new this.serverless.classes.Error(errorMessage));
+      throw new this.serverless.classes.Error(errorMessage);
     }
 
     const MemorySize = Number(functionObject.memorySize)
@@ -199,7 +219,7 @@ class AwsCompileServiceCatalog {
       const errorMessage = 'Missing scProductId or scProductName on service.'
         + ' Please make sure to define one of "scProductId" or "scProductName".'
         + ' See documentation for more info.';
-      return BbPromise.reject(new this.serverless.classes.Error(errorMessage));
+      throw new this.serverless.classes.Error(errorMessage);
     }
 
     newFunction.Properties.ProvisionedProductName = `provisionSC-${functionObject.name}`;
@@ -229,13 +249,13 @@ class AwsCompileServiceCatalog {
       envKeys.forEach((key) => {
         // taken from the bash man pages
         if (!key.match(/^[A-Za-z_][a-zA-Z0-9_]*$/)) {
-          return BbPromise.reject(new this.serverless.classes.Error(`Invalid characters in environment variable name ${key}`));
+          throw new this.serverless.classes.Error(`Invalid characters in environment variable name ${key}`);
         }
         const value = environment[key];
         if (value === Object(value)) {
           const isCFRef = !value.some(v => v !== 'Ref' && !v.startsWith('Fn::'));
           if (!isCFRef) {
-            return BbPromise.reject(new this.serverless.classes.Error(`Environment variable ${key} must contain string`));
+            throw new this.serverless.classes.Error(`Environment variable ${key} must contain string`);
           }
         }
         return true;
@@ -266,7 +286,7 @@ class AwsCompileServiceCatalog {
         });
         return false;
       })) {
-        return BbPromise.reject(this.serverless.classes.Error(errorMessage));
+        throw new this.serverless.classes.Error(errorMessage);
       }
     }
     if (!functionObject.vpc) {
@@ -317,7 +337,6 @@ class AwsCompileServiceCatalog {
         Description: 'Provisioned product ID',
         Value: { Ref: functionLogicalId }
       };
-    return BbPromise.resolve();
   }
 }
 

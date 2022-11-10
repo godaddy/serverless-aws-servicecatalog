@@ -20,8 +20,10 @@ describe('AwsCompileFunctions', () => {
   let awsCompileServiceCatalog;
   const functionNameHello = 'testHello';
   const functionNameBye = 'testBye';
+  const functionNameImage = 'testImage';
   const productNameHello = 'TestHelloLambdaFunctionSCProvisionedProduct';
   const productNameBye = 'TestByeLambdaFunctionSCProvisionedProduct';
+  const productNameImage = 'TestImageLambdaFunctionSCProvisionedProduct';
   const testEnvironment = {
     DEV: 'dev',
     TEST: 'test'
@@ -82,6 +84,14 @@ describe('AwsCompileFunctions', () => {
           individualArtifact)
       },
       handler: 'handler.bye'
+    };
+    awsCompileServiceCatalog.serverless.service.functions[functionNameImage] = {
+      name: 'test-image',
+      package: {
+        artifact: path.join(awsCompileServiceCatalog.packagePath,
+          individualArtifact)
+      },
+      image: 'test.image'
     };
   };
 
@@ -178,6 +188,9 @@ describe('AwsCompileFunctions', () => {
           functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameBye];
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-bye');
+          functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameImage];
+          expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-image');
         });
     });
     it('should set Layers when specified', () => {
@@ -264,7 +277,7 @@ describe('AwsCompileFunctions', () => {
 
       });
 
-      it('can drop some SC Paramter Names', function () {
+      it('can drop some SC Parameter Names', function () {
         const customMapping = {
           stage: ''
         };

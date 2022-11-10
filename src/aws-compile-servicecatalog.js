@@ -134,7 +134,7 @@ class AwsCompileServiceCatalog {
   }
 
   // eslint-disable-next-line complexity, max-statements
-  async compileFunction(functionName) {
+  compileFunction(functionName) {
     const newFunction = this.getCfTemplate();
     const setProvisioningParamValue = (key, value) => {
       if (!key) {
@@ -150,9 +150,6 @@ class AwsCompileServiceCatalog {
       newFunction.Properties.ProvisioningParameters[index].Value = value;
     };
     const functionObject = this.serverless.service.getFunction(functionName);
-    if ('image' in functionObject) {
-      throw new this.serverless.classes.Error('serverless-aws-servicecatalog does not support Docker image functions');
-    }
     functionObject.package = functionObject.package || {};
 
     const serviceArtifactFileName = this.provider.naming.getServiceArtifactName();
@@ -183,8 +180,8 @@ class AwsCompileServiceCatalog {
     const s3FileName = artifactFilePath.split(path.sep).pop();
     setProvisioningParamValue(this.getParameterName('s3Key'), `${s3Folder}/${s3FileName}`);
 
-    if (!functionObject.handler) {
-      const errorMessage = `Missing "handler" property in function "${functionName}".`
+    if (!functionObject.handler && !functionObject.image) {
+      const errorMessage = `Missing "handler" or "image" property in function "${functionName}".`
         + ' Please make sure you point to the correct lambda handler.'
         + ' For example: handler.hello.'
         + ' Please check the docs for more info';
@@ -201,7 +198,11 @@ class AwsCompileServiceCatalog {
       || this.serverless.service.provider.runtime
       || 'nodejs4.3';
 
-    setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+    if (functionObject.handler) {
+      setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+    } else {
+      setProvisioningParamValue(this.getParameterName('image'), functionObject.image);
+    }
     setProvisioningParamValue(this.getParameterName('name'), functionObject.name);
     setProvisioningParamValue(this.getParameterName('memorySize'), MemorySize);
     setProvisioningParamValue(this.getParameterName('timeout'), Timeout);

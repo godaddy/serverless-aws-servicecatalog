@@ -16,7 +16,8 @@ const scParameterMappingDefaults = {
   environmentVariablesJson: 'EnvironmentVariablesJson',
   vpcSecurityGroups: 'VpcSecurityGroups',
   vpcSubnetIds: 'VpcSubnetIds',
-  lambdaLayers: 'LambdaLayers'
+  lambdaLayers: 'LambdaLayers',
+  image: 'ContainerImageUri'
 };
 
 /**
@@ -200,13 +201,13 @@ class AwsCompileServiceCatalog {
 
     if (functionObject.handler) {
       setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+      setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
     } else {
       setProvisioningParamValue(this.getParameterName('image'), functionObject.image);
     }
     setProvisioningParamValue(this.getParameterName('name'), functionObject.name);
     setProvisioningParamValue(this.getParameterName('memorySize'), MemorySize);
     setProvisioningParamValue(this.getParameterName('timeout'), Timeout);
-    setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
     setProvisioningParamValue(this.getParameterName('stage'), this.provider.getStage());
     const serviceProvider = this.serverless.service.provider;
     newFunction.Properties.ProvisioningArtifactName = serviceProvider.scProductVersion;
@@ -228,7 +229,10 @@ class AwsCompileServiceCatalog {
     // publish these properties to the platform
     this.serverless.service.functions[functionName].memory = MemorySize;
     this.serverless.service.functions[functionName].timeout = Timeout;
-    this.serverless.service.functions[functionName].runtime = Runtime;
+
+    if (functionObject.handler) {
+      this.serverless.service.functions[functionName].runtime = Runtime;
+    }
 
     if (functionObject.tags || this.serverless.service.provider.tags) {
       const tags = Object.assign(

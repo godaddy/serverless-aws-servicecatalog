@@ -28,6 +28,10 @@
         "Value": "Runtime"
       },
       {
+        "Key": "ContainerImageUri",
+        "Value": "ContainerImageUri"
+      },
+      {
         "Key": "MemorySize",
         "Value": "MemorySize"
       },

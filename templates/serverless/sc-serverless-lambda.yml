@@ -16,6 +16,10 @@ Parameters:
   Handler:
     Type: String
     Default: wsgi.handler
+  ContainerImageUri:
+    Type: String
+    Description: URI of ECR Image to use instead of .zip archive (highly recommended), must reside in the same AWS Account. 
+    Default: ""
   Runtime:
     Type: String
     Default: python2.7

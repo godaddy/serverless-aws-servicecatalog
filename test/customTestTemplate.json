@@ -20,16 +20,16 @@
         "Value": "test"
       },
       {
-        "Key": "CustomContainerImageUri",
-        "Value": "ContainerImageUri"
-      },
-      {
         "Key": "CustomHandler",
         "Value": "Handler"
       },
       {
         "Key": "CustomRuntime",
         "Value": "Runtime"
+      },
+      {
+        "Key": "CustomContainerImageUri",
+        "Value": "ContainerImageUri"
       },
       {
         "Key": "CustomMemorySize",

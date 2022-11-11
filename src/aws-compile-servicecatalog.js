@@ -150,6 +150,19 @@ class AwsCompileServiceCatalog {
       }
       newFunction.Properties.ProvisioningParameters[index].Value = value;
     };
+
+    const removeProvisioningParamValue = (key) => {
+      if (!key) {
+        return;
+      }
+
+      const index = newFunction.Properties.ProvisioningParameters
+        .findIndex(kv => kv.Key === key);
+      if (index === -1) {
+        return;
+      }
+      newFunction.Properties.ProvisioningParameters[index] = {};
+    };
     const functionObject = this.serverless.service.getFunction(functionName);
     functionObject.package = functionObject.package || {};
 
@@ -202,8 +215,11 @@ class AwsCompileServiceCatalog {
     if (functionObject.handler) {
       setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
       setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
+      removeProvisioningParamValue(this.getParameterName('image'));
     } else {
       setProvisioningParamValue(this.getParameterName('image'), functionObject.image);
+      removeProvisioningParamValue(this.getParameterName('handler'));
+      removeProvisioningParamValue(this.getParameterName('runtime'));
     }
     setProvisioningParamValue(this.getParameterName('name'), functionObject.name);
     setProvisioningParamValue(this.getParameterName('memorySize'), MemorySize);

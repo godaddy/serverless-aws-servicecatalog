@@ -184,12 +184,16 @@ describe('AwsCompileFunctions', () => {
         .then(() => {
           let functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameHello];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('ContainerImageUri');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-hello');
           functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameBye];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('ContainerImageUri');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-bye');
           functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameImage];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Handler');
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Runtime');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-image');
         });
     });
@@ -242,7 +246,7 @@ describe('AwsCompileFunctions', () => {
     });
 
     describe('#scParameterMapping', function () {
-      it('can provide alternate SC Paramter Names', function () {
+      it('can provide alternate SC Parameter Names', function () {
         const customMapping = {
           s3Bucket: 'CustomS3Bucket',
           s3Key: 'CustomS3Key',

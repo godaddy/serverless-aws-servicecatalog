@@ -194,6 +194,8 @@ describe('AwsCompileFunctions', () => {
             .compiledCloudFormationTemplate.Resources[productNameImage];
           expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Handler');
           expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Runtime');
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.contain('ContainerImageUri');
+          expect(functionResource.Properties.ProvisioningParameters.ContainerImageUri).to.equal('test.image');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-image');
         });
     });

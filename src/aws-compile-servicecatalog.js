@@ -16,7 +16,8 @@ const scParameterMappingDefaults = {
   environmentVariablesJson: 'EnvironmentVariablesJson',
   vpcSecurityGroups: 'VpcSecurityGroups',
   vpcSubnetIds: 'VpcSubnetIds',
-  lambdaLayers: 'LambdaLayers'
+  lambdaLayers: 'LambdaLayers',
+  image: 'ContainerImageUri'
 };
 
 /**
@@ -134,7 +135,7 @@ class AwsCompileServiceCatalog {
   }
 
   // eslint-disable-next-line complexity, max-statements
-  async compileFunction(functionName) {
+  compileFunction(functionName) {
     const newFunction = this.getCfTemplate();
     const setProvisioningParamValue = (key, value) => {
       if (!key) {
@@ -149,10 +150,20 @@ class AwsCompileServiceCatalog {
       }
       newFunction.Properties.ProvisioningParameters[index].Value = value;
     };
+
+    const removeProvisioningParamValue = (key) => {
+      if (!key) {
+        return;
+      }
+
+      const index = newFunction.Properties.ProvisioningParameters
+        .findIndex(kv => kv.Key === key);
+      if (index === -1) {
+        return;
+      }
+      newFunction.Properties.ProvisioningParameters[index] = {};
+    };
     const functionObject = this.serverless.service.getFunction(functionName);
-    if ('image' in functionObject) {
-      throw new this.serverless.classes.Error('serverless-aws-servicecatalog does not support Docker image functions');
-    }
     functionObject.package = functionObject.package || {};
 
     const serviceArtifactFileName = this.provider.naming.getServiceArtifactName();
@@ -183,8 +194,8 @@ class AwsCompileServiceCatalog {
     const s3FileName = artifactFilePath.split(path.sep).pop();
     setProvisioningParamValue(this.getParameterName('s3Key'), `${s3Folder}/${s3FileName}`);
 
-    if (!functionObject.handler) {
-      const errorMessage = `Missing "handler" property in function "${functionName}".`
+    if (!functionObject.handler && !functionObject.image) {
+      const errorMessage = `Missing "handler" or "image" property in function "${functionName}".`
         + ' Please make sure you point to the correct lambda handler.'
         + ' For example: handler.hello.'
         + ' Please check the docs for more info';
@@ -201,11 +212,18 @@ class AwsCompileServiceCatalog {
       || this.serverless.service.provider.runtime
       || 'nodejs4.3';
 
-    setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+    if (functionObject.handler) {
+      setProvisioningParamValue(this.getParameterName('handler'), functionObject.handler);
+      setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
+      removeProvisioningParamValue(this.getParameterName('image'));
+    } else {
+      setProvisioningParamValue(this.getParameterName('image'), functionObject.image);
+      removeProvisioningParamValue(this.getParameterName('handler'));
+      removeProvisioningParamValue(this.getParameterName('runtime'));
+    }
     setProvisioningParamValue(this.getParameterName('name'), functionObject.name);
     setProvisioningParamValue(this.getParameterName('memorySize'), MemorySize);
     setProvisioningParamValue(this.getParameterName('timeout'), Timeout);
-    setProvisioningParamValue(this.getParameterName('runtime'), Runtime);
     setProvisioningParamValue(this.getParameterName('stage'), this.provider.getStage());
     const serviceProvider = this.serverless.service.provider;
     newFunction.Properties.ProvisioningArtifactName = serviceProvider.scProductVersion;
@@ -227,7 +245,10 @@ class AwsCompileServiceCatalog {
     // publish these properties to the platform
     this.serverless.service.functions[functionName].memory = MemorySize;
     this.serverless.service.functions[functionName].timeout = Timeout;
-    this.serverless.service.functions[functionName].runtime = Runtime;
+
+    if (functionObject.handler) {
+      this.serverless.service.functions[functionName].runtime = Runtime;
+    }
 
     if (functionObject.tags || this.serverless.service.provider.tags) {
       const tags = Object.assign(

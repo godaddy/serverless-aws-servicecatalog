@@ -23,6 +23,8 @@ Parameters:
   Handler:
     Type: String
     Default: wsgi.handler
+  ContainerImageUri:
+    Type: String
   Runtime:
     Type: String
     Default: python2.7

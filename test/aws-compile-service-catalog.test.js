@@ -20,8 +20,10 @@ describe('AwsCompileFunctions', () => {
   let awsCompileServiceCatalog;
   const functionNameHello = 'testHello';
   const functionNameBye = 'testBye';
+  const functionNameImage = 'testImage';
   const productNameHello = 'TestHelloLambdaFunctionSCProvisionedProduct';
   const productNameBye = 'TestByeLambdaFunctionSCProvisionedProduct';
+  const productNameImage = 'TestImageLambdaFunctionSCProvisionedProduct';
   const testEnvironment = {
     DEV: 'dev',
     TEST: 'test'
@@ -82,6 +84,14 @@ describe('AwsCompileFunctions', () => {
           individualArtifact)
       },
       handler: 'handler.bye'
+    };
+    awsCompileServiceCatalog.serverless.service.functions[functionNameImage] = {
+      name: 'test-image',
+      package: {
+        artifact: path.join(awsCompileServiceCatalog.packagePath,
+          individualArtifact)
+      },
+      image: 'test.image'
     };
   };
 
@@ -174,10 +184,19 @@ describe('AwsCompileFunctions', () => {
         .then(() => {
           let functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameHello];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('ContainerImageUri');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-hello');
           functionResource = awsCompileServiceCatalog.serverless.service.provider
             .compiledCloudFormationTemplate.Resources[productNameBye];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('ContainerImageUri');
           expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-bye');
+          functionResource = awsCompileServiceCatalog.serverless.service.provider
+            .compiledCloudFormationTemplate.Resources[productNameImage];
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Handler');
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.not.contain('Runtime');
+          expect(Object.keys(functionResource.Properties.ProvisioningParameters)).to.contain('ContainerImageUri');
+          expect(functionResource.Properties.ProvisioningParameters.ContainerImageUri).to.equal('test.image');
+          expect(functionResource.Properties.ProvisionedProductName).to.equal('provisionSC-test-image');
         });
     });
     it('should set Layers when specified', () => {
@@ -229,7 +248,7 @@ describe('AwsCompileFunctions', () => {
     });
 
     describe('#scParameterMapping', function () {
-      it('can provide alternate SC Paramter Names', function () {
+      it('can provide alternate SC Parameter Names', function () {
         const customMapping = {
           s3Bucket: 'CustomS3Bucket',
           s3Key: 'CustomS3Key',
@@ -264,7 +283,7 @@ describe('AwsCompileFunctions', () => {
 
       });
 
-      it('can drop some SC Paramter Names', function () {
+      it('can drop some SC Parameter Names', function () {
         const customMapping = {
           stage: ''
         };

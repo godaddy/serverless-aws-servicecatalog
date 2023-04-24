@@ -24,6 +24,10 @@
         "Value": "Handler"
       },
       {
+        "Key": "ContainerImageUri",
+        "Value": "ContainerImageUri"
+      },
+      {
         "Key": "Runtime",
         "Value": "Runtime"
       },
